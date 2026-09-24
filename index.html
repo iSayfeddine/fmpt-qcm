@@ -6,7 +6,7 @@
   <title>FMPT — Challenge QCM Médical | التواصل الصحي</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- VRAI GÉNÉRATEUR DE QR CODE -->
+  <!-- Vrai générateur QR Code -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -26,7 +26,7 @@
       <div class="text-xs uppercase tracking-widest text-slate-400 font-semibold">Faculté de Médecine et de Pharmacie de Tanger</div>
     </div>
     
-    <div class="flex bg-slate-900 p-1.5 rounded-xl border border-slate-800 text-sm font-semibold">
+    <div class="flex bg-slate-900 p-1.5 rounded-xl border border-slate-800 text-sm font-semibold z-50">
       <button id="btn-live" onclick="switchView('live')" class="px-5 py-2 rounded-lg bg-amber-500 text-slate-950 font-bold transition">Écran Projecteur</button>
       <button id="btn-join" onclick="switchView('join')" class="px-5 py-2 rounded-lg text-slate-400 hover:text-white transition">Mobile Étudiant</button>
       <button id="btn-admin" onclick="switchView('admin')" class="px-5 py-2 rounded-lg text-slate-400 hover:text-white transition">Admin Dashboard</button>
@@ -36,18 +36,18 @@
   <!-- VIEW 1: LIVE PROJECTOR SCREEN (/live) -->
   <main id="view-live" class="my-8 flex-1 flex flex-col justify-center items-center">
     
-    <!-- LOBBY (AVANT LE DÉBUT) -->
     <div id="live-lobby" class="glass-panel gold-glow rounded-3xl p-8 md:p-12 w-full max-w-4xl text-center border border-amber-500/30">
       <div class="text-xs font-bold uppercase tracking-widest text-amber-400 mb-2">Grand Amphithéâtre FMPT</div>
       <h1 class="text-3xl md:text-5xl font-black text-white mb-6">MEDICAL CHALLENGE 2026</h1>
       
       <div class="flex flex-col items-center my-6">
-        <!-- LE VRAI QR CODE APPARAITRA ICI -->
-        <div class="bg-white p-6 rounded-2xl shadow-2xl mb-4 border-4 border-amber-400">
+        <!-- VRAI QR CODE -->
+        <div class="bg-white p-6 rounded-2xl shadow-2xl mb-4 border-4 border-amber-400 min-h-[200px] min-w-[200px] flex items-center justify-center">
           <div id="real-qrcode"></div>
         </div>
         
         <div class="text-xl font-black text-amber-400 tracking-wider mb-1">SCANNEZ POUR REJOINDRE</div>
+        <div id="live-url-display" class="text-sm font-semibold text-slate-300 bg-slate-900/80 px-4 py-1.5 rounded-lg border border-slate-800 mb-6 font-mono"></div>
         
         <div class="bg-slate-900/90 px-8 py-4 rounded-2xl border border-slate-800 flex items-center gap-4 mt-6">
           <div class="w-4 h-4 rounded-full bg-emerald-500 animate-ping"></div>
@@ -57,7 +57,7 @@
       </div>
     </div>
 
-    <!-- QUESTION ACTIVE STATE (AFFICHAGE DU QCM) -->
+    <!-- ÉCRAN QUESTION (PROJECTEUR) -->
     <div id="live-question-screen" class="hidden glass-panel rounded-3xl p-8 md:p-12 w-full max-w-5xl border border-slate-700">
       <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-800">
         <div>
@@ -69,11 +69,8 @@
           <span id="live-timer" class="text-3xl font-black text-amber-400 font-mono">20</span>
         </div>
       </div>
-
       <h2 id="live-question-text" class="text-2xl md:text-3xl font-bold text-white mb-8 leading-relaxed">Chargement...</h2>
-
       <div id="live-options-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6"></div>
-
       <div id="live-explanation-box" class="hidden p-6 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl mt-6">
         <div class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-1">Explication Clinique :</div>
         <p id="live-explanation-text" class="text-slate-200 text-sm leading-relaxed"></p>
@@ -101,7 +98,7 @@
         <div class="w-16 h-16 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-500/30 font-bold text-2xl">✓</div>
         <h2 class="text-2xl font-bold text-white mb-1">VOUS ÊTES INSCRIT !</h2>
         <p id="registered-name" class="text-amber-400 font-bold text-lg mb-6"></p>
-        <div class="text-sm text-slate-400 animate-pulse font-medium">En attente de la première question...</div>
+        <div class="text-sm text-slate-400 animate-pulse font-medium">En attente du QCM...</div>
       </div>
 
       <div id="mobile-question-screen" class="hidden text-left">
@@ -110,9 +107,7 @@
           <span id="mobile-timer" class="text-lg font-black text-amber-400 font-mono">20s</span>
         </div>
         <h3 id="mobile-q-text" class="text-base font-bold text-white mb-6 leading-snug"></h3>
-        
         <div id="mobile-options-container" class="space-y-3 mb-6"></div>
-
         <div id="mobile-answer-status" class="hidden p-3 bg-emerald-500/20 border border-emerald-500/40 rounded-xl text-center text-xs font-bold text-emerald-300">
           ✓ Réponse enregistrée !
         </div>
@@ -125,79 +120,116 @@
     <div class="glass-panel rounded-3xl p-8 w-full max-w-4xl border border-slate-800">
       <h2 class="text-2xl font-extrabold text-white mb-6">Tableau de Contrôle Organisateur</h2>
       
+      <div id="admin-error-box" class="hidden bg-rose-500/20 border border-rose-500/50 p-4 rounded-xl mb-6 text-rose-300 font-semibold text-sm">
+        ⚠️ Attention : Les clés Supabase ne sont pas configurées. Le mode multijoueur est désactivé.
+      </div>
+
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
           <div class="text-xs text-slate-400 mb-1">Code Session</div>
           <div class="text-2xl font-black text-amber-400 font-mono">MED26</div>
         </div>
         <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
-          <div class="text-xs text-slate-400 mb-1">Participants Inscrits en direct</div>
+          <div class="text-xs text-slate-400 mb-1">Participants Inscrits</div>
           <div id="admin-count-display" class="text-2xl font-black text-emerald-400">0</div>
         </div>
       </div>
 
-      <!-- BANQUE DE QUESTIONS ET CONTRÔLES -->
       <div class="bg-slate-900/90 p-6 rounded-2xl border border-slate-800">
-        <h3 class="text-sm font-bold uppercase tracking-wider text-amber-400 mb-4">Banque de Questions QCM</h3>
-        
+        <h3 class="text-sm font-bold uppercase tracking-wider text-amber-400 mb-4">Banque de Questions QCM FMPT</h3>
         <div class="mb-6">
-          <label class="block text-xs font-semibold text-slate-400 mb-2">Sélectionner le QCM à envoyer aux étudiants :</label>
-          <select id="admin-q-select" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white font-medium focus:outline-none focus:border-amber-400">
-            <!-- Rempli automatiquement -->
-          </select>
+          <select id="admin-q-select" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white font-medium focus:outline-none focus:border-amber-400"></select>
         </div>
-
+        <!-- LES NOUVEAUX BOUTONS ADMIN -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <button onclick="startQuestion()" class="py-3 px-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition">
-            ▶ Lancer Question
-          </button>
-          <button onclick="lockAnswers()" class="py-3 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition">
-            🔒 Verrouiller
-          </button>
-          <button onclick="revealAnswer()" class="py-3 px-4 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition">
-            👁 Révéler Rép.
-          </button>
-          <button onclick="resetLobby()" class="py-3 px-4 bg-rose-500 hover:bg-rose-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition">
-            ↺ Retour Lobby
-          </button>
+          <button onclick="startQuestion()" class="py-3 px-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition">▶ Lancer Question</button>
+          <button onclick="lockAnswers()" class="py-3 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition">🔒 Verrouiller</button>
+          <button onclick="revealAnswer()" class="py-3 px-4 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition">👁 Révéler Rép.</button>
+          <button onclick="resetLobby()" class="py-3 px-4 bg-rose-500 hover:bg-rose-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition">↺ Retour Lobby</button>
         </div>
       </div>
     </div>
   </main>
 
   <script>
-    // ==========================================
-    // 1. CONFIGURATION SUPABASE (REMETTRE VOS CLES ICI)
-    // ==========================================
+    // ========================================================
+    // 1. GESTION DE L'INTERFACE (Fonctionne même sans internet)
+    // ========================================================
+    function switchView(viewName) {
+      document.getElementById('view-live').classList.add('hidden');
+      document.getElementById('view-join').classList.add('hidden');
+      document.getElementById('view-admin').classList.add('hidden');
+      
+      document.getElementById('btn-live').className = "px-5 py-2 rounded-lg text-slate-400 hover:text-white transition";
+      document.getElementById('btn-join').className = "px-5 py-2 rounded-lg text-slate-400 hover:text-white transition";
+      document.getElementById('btn-admin').className = "px-5 py-2 rounded-lg text-slate-400 hover:text-white transition";
+
+      document.getElementById('view-' + viewName).classList.remove('hidden');
+      
+      if (viewName === 'live') document.getElementById('btn-live').className = "px-5 py-2 rounded-lg bg-amber-500 text-slate-950 font-bold shadow-md transition";
+      if (viewName === 'join') document.getElementById('btn-join').className = "px-5 py-2 rounded-lg bg-cyan-500 text-slate-950 font-bold shadow-md transition";
+      if (viewName === 'admin') document.getElementById('btn-admin').className = "px-5 py-2 rounded-lg bg-emerald-500 text-slate-950 font-bold shadow-md transition";
+    }
+
+    // ========================================================
+    // 2. CONFIGURATION SUPABASE ET VARIABLES
+    // ========================================================
+    
+    // ⚠️ METTEZ VOS CLES ICI :
     const SUPABASE_URL = 'https://jwfbudorqkoaoenzpdcg.supabase.co/rest/v1/'; 
     const SUPABASE_ANON_KEY = 'sb_publishable_c5txfs7T6ICtlV2OnIWZiA_WX3E5VFP';
 
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let db = null;
+    let participantCount = 0;
+    let currentQuestion = null;
+    let timerInterval = null;
 
-    // ==========================================
-    // 2. GÉNÉRATION DU VRAI QR CODE
-    // ==========================================
+    // ========================================================
+    // 3. INITIALISATION AU DÉMARRAGE
+    // ========================================================
     window.onload = function() {
-      // Lit l'URL pour ouvrir directement la bonne vue (utile pour le QR code)
+      // Afficher l'URL du site sous le QR code
+      const currentUrl = window.location.origin;
+      const joinUrl = currentUrl + "?view=join";
+      document.getElementById('live-url-display').innerText = joinUrl;
+
+      // Générer le VRAI QR Code
+      const qrContainer = document.getElementById("real-qrcode");
+      if(qrContainer) {
+        new QRCode(qrContainer, { text: joinUrl, width: 180, height: 180, colorDark : "#060B19", colorLight : "#ffffff" });
+      }
+
+      // Lire l'URL pour changer d'écran automatiquement
       const urlParams = new URLSearchParams(window.location.search);
       const view = urlParams.get('view') || 'live';
       switchView(view);
 
-      // Génère un VRAI QR code qui pointe directement vers la vue mobile de VOTRE domaine Vercel !
-      const joinUrl = window.location.origin + '?view=join';
-      new QRCode(document.getElementById("real-qrcode"), {
-        text: joinUrl,
-        width: 180,
-        height: 180,
-        colorDark : "#060B19",
-        colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.H
+      // Charger la banque de questions dans le select Admin
+      const qSelect = document.getElementById('admin-q-select');
+      QUESTION_BANK.forEach(q => {
+        const opt = document.createElement('option');
+        opt.value = q.id;
+        opt.innerText = `[${q.category}] ${q.text.substring(0,60)}...`;
+        qSelect.appendChild(opt);
       });
+
+      // Connecter Supabase (avec sécurité anti-erreur)
+      try {
+        if(SUPABASE_URL === 'VOTRE_URL_SUPABASE' || !SUPABASE_URL.startsWith('http')) {
+          document.getElementById('admin-error-box').classList.remove('hidden');
+          console.warn("Clés Supabase manquantes !");
+        } else {
+          db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+          setupRealtime();
+        }
+      } catch (err) {
+        console.error("Erreur Supabase:", err);
+      }
     };
 
-    // ==========================================
-    // 3. BANQUE DE QUESTIONS FMPT
-    // ==========================================
+    // ========================================================
+    // 4. BANQUE DE QUESTIONS
+    // ========================================================
     const QUESTION_BANK = [
       {
         id: "q1", category: "Cardiologie", round: "ROUND 1", timer: 20,
@@ -208,8 +240,7 @@
           { letter: "C", text: "Sous-décalage de ST diffus" },
           { letter: "D", text: "Bloc de branche droit" }
         ],
-        correct: "B",
-        explanation: "Le sus-décalage avec image en miroir signe l'occlusion coronaire aiguë totale."
+        correct: "B", explanation: "Le sus-décalage avec image en miroir signe l'occlusion coronaire aiguë totale."
       },
       {
         id: "q2", category: "Pharmacologie", round: "ROUND 1", timer: 15,
@@ -220,59 +251,71 @@
           { letter: "C", text: "Flumazénil" },
           { letter: "D", text: "Atropine" }
         ],
-        correct: "B",
-        explanation: "La N-Acétylcystéine protège le foie de la nécrose hépatocellulaire."
+        correct: "B", explanation: "La N-Acétylcystéine protège le foie de la nécrose hépatocellulaire."
       }
     ];
 
-    let currentQuestion = null;
-    let timerInterval = null;
-    let participantCount = 0;
+    // ========================================================
+    // 5. FONCTIONS DE LA COMPÉTITION (SÉCURISÉES)
+    // ========================================================
+    function setupRealtime() {
+      if(!db) return;
+      
+      // Écouter le compteur d'étudiants
+      db.channel('public:participants')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'participants' }, () => {
+          participantCount++;
+          document.getElementById('live-count-display').innerText = participantCount;
+          document.getElementById('admin-count-display').innerText = participantCount;
+        }).subscribe();
 
-    // Remplir la liste déroulante côté Admin
-    const qSelect = document.getElementById('admin-q-select');
-    QUESTION_BANK.forEach((q, idx) => {
-      const opt = document.createElement('option');
-      opt.value = q.id;
-      opt.innerText = `[${q.category}] ${q.text}`;
-      qSelect.appendChild(opt);
-    });
+      // Écouter le lancement des questions
+      db.channel('competition_channel')
+        .on('broadcast', { event: 'QUESTION_START' }, payload => renderLiveQuestion(payload.payload))
+        .on('broadcast', { event: 'LOCK_ANSWERS' }, () => executeLock())
+        .on('broadcast', { event: 'REVEAL_ANSWER' }, payload => executeReveal(payload.payload))
+        .on('broadcast', { event: 'RESET_LOBBY' }, () => executeReset())
+        .subscribe();
+    }
 
-    // ==========================================
-    // 4. RÉCEPTION DES ÉVÉNEMENTS EN DIRECT
-    // ==========================================
-    supabase.channel('competition_channel')
-      .on('broadcast', { event: 'QUESTION_START' }, payload => renderLiveQuestion(payload.payload))
-      .on('broadcast', { event: 'LOCK_ANSWERS' }, () => executeLock())
-      .on('broadcast', { event: 'REVEAL_ANSWER' }, payload => executeReveal(payload.payload))
-      .on('broadcast', { event: 'RESET_LOBBY' }, () => executeReset())
-      .subscribe();
+    async function joinCompetition() {
+      const name = document.getElementById('student-name').value.trim();
+      if (!name) return alert('Veuillez entrer votre nom.');
+      
+      document.getElementById('join-btn').innerText = "Connexion...";
+      if(db) await db.from('participants').insert([{ nom: name, competition_code: 'MED26' }]);
+      
+      document.getElementById('registered-name').innerText = name;
+      document.getElementById('mobile-form').classList.add('hidden');
+      document.getElementById('mobile-waiting').classList.remove('hidden');
+    }
 
-    // ==========================================
-    // 5. ACTIONS DE L'ORGANISATEUR (ADMIN)
-    // ==========================================
     async function startQuestion() {
-      const selectedId = document.getElementById('admin-q-select').value;
-      const q = QUESTION_BANK.find(item => item.id === selectedId);
-      await supabase.channel('competition_channel').send({ type: 'broadcast', event: 'QUESTION_START', payload: q });
+      const q = QUESTION_BANK.find(item => item.id === document.getElementById('admin-q-select').value);
+      if(db) await db.channel('competition_channel').send({ type: 'broadcast', event: 'QUESTION_START', payload: q });
+      else renderLiveQuestion(q); // Mode hors-ligne de secours
     }
 
     async function lockAnswers() {
-      await supabase.channel('competition_channel').send({ type: 'broadcast', event: 'LOCK_ANSWERS' });
+      if(db) await db.channel('competition_channel').send({ type: 'broadcast', event: 'LOCK_ANSWERS' });
+      else executeLock();
     }
 
     async function revealAnswer() {
       const q = QUESTION_BANK.find(item => item.id === document.getElementById('admin-q-select').value);
-      await supabase.channel('competition_channel').send({ type: 'broadcast', event: 'REVEAL_ANSWER', payload: { correct: q.correct, explanation: q.explanation } });
+      const payload = { correct: q.correct, explanation: q.explanation };
+      if(db) await db.channel('competition_channel').send({ type: 'broadcast', event: 'REVEAL_ANSWER', payload });
+      else executeReveal(payload);
     }
 
     async function resetLobby() {
-      await supabase.channel('competition_channel').send({ type: 'broadcast', event: 'RESET_LOBBY' });
+      if(db) await db.channel('competition_channel').send({ type: 'broadcast', event: 'RESET_LOBBY' });
+      else executeReset();
     }
 
-    // ==========================================
-    // 6. AFFICHAGE ET LOGIQUE INTERFACE
-    // ==========================================
+    // ========================================================
+    // 6. AFFICHAGE DES ÉCRANS (Projecteur & Mobile)
+    // ========================================================
     function renderLiveQuestion(q) {
       currentQuestion = q;
       document.getElementById('live-lobby').classList.add('hidden');
@@ -286,7 +329,7 @@
       const grid = document.getElementById('live-options-grid');
       grid.innerHTML = '';
       q.options.forEach(opt => {
-        grid.innerHTML += `<div id="opt-box-${opt.letter}" class="p-5 bg-slate-900 border border-slate-800 rounded-2xl flex items-center gap-4"><span class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold">${opt.letter}</span><span class="text-white font-semibold">${opt.text}</span></div>`;
+        grid.innerHTML += `<div id="opt-box-${opt.letter}" class="p-5 bg-slate-900 border border-slate-800 rounded-2xl flex items-center gap-4 transition"><span class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold border border-amber-500/30">${opt.letter}</span><span class="text-white font-semibold text-lg">${opt.text}</span></div>`;
       });
 
       document.getElementById('mobile-form').classList.add('hidden');
@@ -298,9 +341,8 @@
       const mContainer = document.getElementById('mobile-options-container');
       mContainer.innerHTML = '';
       q.options.forEach(opt => {
-        mContainer.innerHTML += `<button id="m-btn-${opt.letter}" onclick="submitAnswer('${opt.letter}')" class="w-full p-4 bg-slate-900 border border-slate-700 hover:border-amber-400 rounded-2xl text-left text-white font-bold flex items-center gap-3"><span class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm">${opt.letter}</span><span>${opt.text}</span></button>`;
+        mContainer.innerHTML += `<button id="m-btn-${opt.letter}" onclick="submitAnswer('${opt.letter}')" class="w-full p-4 bg-slate-900 border border-slate-700 hover:border-amber-400 rounded-2xl text-left text-white font-bold flex items-center gap-3 transition"><span class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm">${opt.letter}</span><span>${opt.text}</span></button>`;
       });
-
       startTimer(q.timer);
     }
 
@@ -359,40 +401,6 @@
           executeLock();
         }
       }, 1000);
-    }
-
-    // Gestion du compteur Realtime
-    supabase.channel('public:participants')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'participants' }, () => {
-        participantCount++;
-        document.getElementById('live-count-display').innerText = participantCount;
-        document.getElementById('admin-count-display').innerText = participantCount;
-      }).subscribe();
-
-    async function joinCompetition() {
-      const name = document.getElementById('student-name').value.trim();
-      if (!name) return alert('Veuillez entrer votre nom.');
-      document.getElementById('join-btn').innerText = "Connexion...";
-      await supabase.from('participants').insert([{ nom: name, competition_code: 'MED26' }]);
-      document.getElementById('registered-name').innerText = name;
-      document.getElementById('mobile-form').classList.add('hidden');
-      document.getElementById('mobile-waiting').classList.remove('hidden');
-    }
-
-    function switchView(viewName) {
-      document.getElementById('view-live').classList.add('hidden');
-      document.getElementById('view-join').classList.add('hidden');
-      document.getElementById('view-admin').classList.add('hidden');
-      
-      document.getElementById('btn-live').className = "px-5 py-2 rounded-lg text-slate-400 hover:text-white transition";
-      document.getElementById('btn-join').className = "px-5 py-2 rounded-lg text-slate-400 hover:text-white transition";
-      document.getElementById('btn-admin').className = "px-5 py-2 rounded-lg text-slate-400 hover:text-white transition";
-
-      document.getElementById('view-' + viewName).classList.remove('hidden');
-      
-      if (viewName === 'live') document.getElementById('btn-live').className = "px-5 py-2 rounded-lg bg-amber-500 text-slate-950 font-bold shadow-md transition";
-      if (viewName === 'join') document.getElementById('btn-join').className = "px-5 py-2 rounded-lg bg-cyan-500 text-slate-950 font-bold shadow-md transition";
-      if (viewName === 'admin') document.getElementById('btn-admin').className = "px-5 py-2 rounded-lg bg-emerald-500 text-slate-950 font-bold shadow-md transition";
     }
   </script>
 </body>
