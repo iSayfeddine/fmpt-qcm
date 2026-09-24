@@ -35,7 +35,6 @@
   <!-- VIEW 1: LIVE PROJECTOR SCREEN (/live) -->
   <main id="view-live" class="my-8 flex-1 flex flex-col justify-center items-center">
     
-    <!-- LOBBY -->
     <div id="live-lobby" class="glass-panel gold-glow rounded-3xl p-8 md:p-12 w-full max-w-4xl text-center border border-amber-500/30">
       <div class="text-xs font-bold uppercase tracking-widest text-amber-400 mb-2">Grand Amphithéâtre FMPT</div>
       <h1 class="text-3xl md:text-5xl font-black text-white mb-6">MEDICAL CHALLENGE 2026</h1>
@@ -55,7 +54,6 @@
       </div>
     </div>
 
-    <!-- ÉCRAN QUESTION -->
     <div id="live-question-screen" class="hidden glass-panel rounded-3xl p-8 md:p-12 w-full max-w-5xl border border-slate-700">
       <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-800">
         <div>
@@ -76,12 +74,9 @@
       </div>
     </div>
 
-    <!-- ÉCRAN CLASSEMENT (NOUVEAU) -->
     <div id="live-leaderboard-screen" class="hidden glass-panel gold-glow rounded-3xl p-8 md:p-12 w-full max-w-4xl text-center border border-amber-500/30">
       <h2 class="text-4xl font-black text-amber-400 mb-8 uppercase tracking-widest">🏆 Classement en Direct</h2>
-      <div id="leaderboard-list" class="flex flex-col gap-3">
-        <!-- Rempli par JS -->
-      </div>
+      <div id="leaderboard-list" class="flex flex-col gap-3"></div>
     </div>
   </main>
 
@@ -109,7 +104,6 @@
         <div class="text-sm text-slate-400 animate-pulse font-medium">En attente du système...</div>
       </div>
 
-      <!-- ÉCRAN DE RÉPONSE -->
       <div id="mobile-question-screen" class="hidden text-left">
         <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-800">
           <span class="text-xs font-bold text-amber-400 uppercase">Question Active</span>
@@ -122,7 +116,6 @@
         </div>
       </div>
 
-      <!-- ÉCRAN FEEDBACK RÉSULTAT (NOUVEAU) -->
       <div id="mobile-feedback-screen" class="hidden py-8">
         <div id="feedback-box" class="p-8 rounded-3xl text-center border-2">
           <h2 id="feedback-title" class="text-3xl font-black mb-2 text-white"></h2>
@@ -146,7 +139,6 @@
         </div>
       </div>
 
-      <!-- STATISTIQUES LIVE -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex justify-between items-center">
           <div>
@@ -159,13 +151,17 @@
             <div class="text-xs text-slate-400 mb-1">Participants Inscrits</div>
             <div id="admin-count-display" class="text-2xl font-black text-emerald-400">0</div>
           </div>
-          <button onclick="showLeaderboard()" class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg text-xs uppercase tracking-wider transition">
-            🏆 Afficher Classement
-          </button>
+          <div class="flex flex-col gap-2">
+            <button onclick="showLeaderboard()" class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg text-xs uppercase tracking-wider transition">
+              🏆 Afficher Classement
+            </button>
+            <button onclick="hardResetDatabase()" class="px-4 py-2 bg-rose-500 hover:bg-rose-400 text-slate-950 font-bold rounded-lg text-xs uppercase tracking-wider transition">
+              🗑️ Vider la base
+            </button>
+          </div>
         </div>
       </div>
 
-      <!-- CONTRÔLE LIVE -->
       <div class="bg-slate-900/90 p-6 rounded-2xl border border-slate-800 mb-6">
         <h3 class="text-sm font-bold uppercase tracking-wider text-amber-400 mb-4">Lancement en Direct</h3>
         <div class="mb-4">
@@ -179,7 +175,6 @@
         </div>
       </div>
 
-      <!-- CRÉATION DE QUESTIONS (AVEC POINTS) -->
       <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
         <h3 class="text-sm font-bold uppercase tracking-wider text-emerald-400 mb-4">+ Ajouter une Question</h3>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -217,9 +212,6 @@
   </main>
 
   <script>
-    // ========================================================
-    // 1. CONFIGURATION SUPABASE (VOS CLÉS INTÉGRÉES)
-    // ========================================================
     const SUPABASE_URL = 'https://jwfbudorqkoaoenzpdcg.supabase.co'; 
     const SUPABASE_ANON_KEY = 'sb_publishable_c5txfs7T6ICtlV2OnIWZiA_WX3E5VFP';
 
@@ -229,16 +221,12 @@
     let timerInterval = null;
     let questionBank = [];
 
-    // Variables pour l'étudiant mobile
     let myParticipantId = null;
     let myScore = 0;
     let myAnswer = null;
 
     const localSync = new BroadcastChannel('fmpt_local_sync');
 
-    // ========================================================
-    // 2. INITIALISATION
-    // ========================================================
     window.onload = function() {
       const joinUrl = window.location.origin + "?view=join";
       document.getElementById('live-url-display').innerText = joinUrl;
@@ -311,9 +299,6 @@
       alert("Question ajoutée avec succès !");
     }
 
-    // ========================================================
-    // 3. SYNCHRONISATION
-    // ========================================================
     async function setupConnection() {
       try {
         db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -357,11 +342,11 @@
       if(payload.action === 'REVEAL_ANSWER') executeReveal(payload.data);
       if(payload.action === 'RESET_LOBBY') executeReset();
       if(payload.action === 'SHOW_LEADERBOARD') executeLeaderboard();
+      // Si l'admin vide la base, on redémarre l'appli de tous les joueurs connectés !
+      if(payload.action === 'HARD_RESET') window.location.reload(); 
     }
 
-    // ========================================================
-    // 4. BOUTONS ADMIN
-    // ========================================================
+    // BOUTONS ADMIN
     function startQuestion() {
       const q = questionBank.find(item => item.id === document.getElementById('admin-q-select').value);
       if(q) emitEvent('QUESTION_START', q);
@@ -374,21 +359,35 @@
     function resetLobby() { emitEvent('RESET_LOBBY'); }
     function showLeaderboard() { emitEvent('SHOW_LEADERBOARD'); }
 
-    // ========================================================
-    // 5. GESTION DES PARTICIPANTS ET RÉSULTATS
-    // ========================================================
+    // FONCTION POUR VIDER LA BASE (NETTOYAGE DES TESTS)
+    async function hardResetDatabase() {
+      if(!confirm("ATTENTION : Cela va supprimer TOUS les participants et remettre les compteurs à zéro. Continuer ?")) return;
+      if(db) {
+        await db.from('participants').delete().eq('competition_code', 'MED26');
+        emitEvent('HARD_RESET');
+      }
+    }
+
     async function joinCompetition() {
       const name = document.getElementById('student-name').value.trim();
       if (!name) return alert('Veuillez entrer votre nom.');
       
-      document.getElementById('join-btn').innerText = "Connexion...";
+      document.getElementById('join-btn').innerText = "Vérification...";
       
       if(db) {
-        // Enregistre et récupère l'ID du joueur pour le score
+        // VERIFICATION : Le nom existe-t-il déjà ?
+        const { data: existing } = await db.from('participants')
+          .select('id').eq('competition_code', 'MED26').ilike('nom', name);
+          
+        if(existing && existing.length > 0) {
+          alert("Ce nom est déjà utilisé ! Veuillez ajouter votre initiale ou un pseudo unique.");
+          document.getElementById('join-btn').innerText = "Rejoindre le Challenge";
+          return;
+        }
+
         const { data, error } = await db.from('participants')
           .insert([{ nom: name, competition_code: 'MED26', score: 0 }])
-          .select()
-          .single();
+          .select().single();
           
         if(error) { alert("Erreur: " + error.message); return; }
         myParticipantId = data.id;
@@ -402,9 +401,8 @@
 
     function renderLiveQuestion(q) {
       currentQuestion = q;
-      myAnswer = null; // Réinitialise la réponse
+      myAnswer = null;
 
-      // Projecteur
       document.getElementById('live-lobby').classList.add('hidden');
       document.getElementById('live-leaderboard-screen').classList.add('hidden');
       document.getElementById('live-question-screen').classList.remove('hidden');
@@ -421,7 +419,6 @@
         grid.innerHTML += `<div id="opt-box-${opt.letter}" class="p-5 bg-slate-900 border border-slate-800 rounded-2xl flex items-center gap-4 transition"><span class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold border border-amber-500/30">${opt.letter}</span><span class="text-white font-semibold text-lg">${opt.text}</span></div>`;
       });
 
-      // Mobile
       document.getElementById('mobile-waiting').classList.add('hidden');
       document.getElementById('mobile-feedback-screen').classList.add('hidden');
       document.getElementById('mobile-question-screen').classList.remove('hidden');
@@ -437,8 +434,7 @@
     }
 
     function submitAnswer(letter) {
-      myAnswer = letter; // Sauvegarde le choix localement
-      
+      myAnswer = letter;
       currentQuestion.options.forEach(opt => {
         const btn = document.getElementById(`m-btn-${opt.letter}`);
         if(btn) { btn.disabled = true; btn.classList.add('opacity-50'); }
@@ -462,7 +458,10 @@
     }
 
     async function executeReveal(payload) {
-      // 1. Révélation Projecteur
+      // ARRÊT DU CHRONO AU CLIC "RÉVÉLER"
+      clearInterval(timerInterval);
+      document.getElementById('live-timer').innerText = "00";
+      
       const correctBox = document.getElementById(`opt-box-${payload.correct}`);
       if (correctBox) {
         correctBox.classList.remove('bg-slate-900', 'border-slate-800');
@@ -471,7 +470,6 @@
       document.getElementById('live-explanation-text').innerText = payload.explanation;
       document.getElementById('live-explanation-box').classList.remove('hidden');
 
-      // 2. Révélation et Score Mobile (Si l'étudiant est sur l'écran question)
       if(!document.getElementById('mobile-question-screen').classList.contains('hidden')) {
         document.getElementById('mobile-question-screen').classList.add('hidden');
         document.getElementById('mobile-feedback-screen').classList.remove('hidden');
@@ -481,19 +479,16 @@
         const points = document.getElementById('feedback-points');
 
         if(myAnswer === payload.correct) {
-          // Bonne réponse
           myScore += payload.points;
           box.className = "p-8 rounded-3xl text-center bg-emerald-500/20 border-2 border-emerald-500";
           title.innerText = "✅ CORRECT !";
           title.className = "text-3xl font-black mb-2 text-emerald-400";
           points.innerText = `+${payload.points} Points gagnés`;
           
-          // Mise à jour du score dans la base de données !
           if(db && myParticipantId) {
             await db.from('participants').update({ score: myScore }).eq('id', myParticipantId);
           }
         } else {
-          // Mauvaise réponse ou pas de réponse
           box.className = "p-8 rounded-3xl text-center bg-rose-500/20 border-2 border-rose-500";
           title.innerText = "❌ INCORRECT";
           title.className = "text-3xl font-black mb-2 text-rose-400";
@@ -510,7 +505,6 @@
       document.getElementById('live-question-screen').classList.add('hidden');
       document.getElementById('live-leaderboard-screen').classList.remove('hidden');
 
-      // Récupérer le Top 10 sur Supabase
       if(db) {
         const { data, error } = await db.from('participants')
           .select('nom, score')
