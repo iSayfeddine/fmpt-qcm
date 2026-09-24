@@ -35,6 +35,7 @@
   <!-- VIEW 1: LIVE PROJECTOR SCREEN (/live) -->
   <main id="view-live" class="my-8 flex-1 flex flex-col justify-center items-center">
     
+    <!-- LOBBY -->
     <div id="live-lobby" class="glass-panel gold-glow rounded-3xl p-8 md:p-12 w-full max-w-4xl text-center border border-amber-500/30">
       <div class="text-xs font-bold uppercase tracking-widest text-amber-400 mb-2">Grand Amphithéâtre FMPT</div>
       <h1 class="text-3xl md:text-5xl font-black text-white mb-6">MEDICAL CHALLENGE 2026</h1>
@@ -54,12 +55,13 @@
       </div>
     </div>
 
-    <!-- ÉCRAN QUESTION (PROJECTEUR) -->
+    <!-- ÉCRAN QUESTION -->
     <div id="live-question-screen" class="hidden glass-panel rounded-3xl p-8 md:p-12 w-full max-w-5xl border border-slate-700">
       <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-800">
         <div>
           <span id="live-round-tag" class="text-xs font-black uppercase tracking-widest bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full border border-amber-500/30"></span>
           <span id="live-category-tag" class="ml-2 text-xs font-bold uppercase tracking-wider text-slate-400"></span>
+          <span id="live-points-tag" class="ml-2 text-xs font-bold uppercase tracking-wider text-emerald-400"></span>
         </div>
         <div class="flex items-center gap-3 bg-slate-900 px-5 py-2 rounded-2xl border border-slate-800">
           <span class="text-xs font-bold text-slate-400 uppercase">Temps :</span>
@@ -71,6 +73,14 @@
       <div id="live-explanation-box" class="hidden p-6 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl mt-6">
         <div class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-1">Explication Clinique :</div>
         <p id="live-explanation-text" class="text-slate-200 text-sm leading-relaxed"></p>
+      </div>
+    </div>
+
+    <!-- ÉCRAN CLASSEMENT (NOUVEAU) -->
+    <div id="live-leaderboard-screen" class="hidden glass-panel gold-glow rounded-3xl p-8 md:p-12 w-full max-w-4xl text-center border border-amber-500/30">
+      <h2 class="text-4xl font-black text-amber-400 mb-8 uppercase tracking-widest">🏆 Classement en Direct</h2>
+      <div id="leaderboard-list" class="flex flex-col gap-3">
+        <!-- Rempli par JS -->
       </div>
     </div>
   </main>
@@ -94,10 +104,12 @@
       <div id="mobile-waiting" class="hidden py-8">
         <div class="w-16 h-16 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-500/30 font-bold text-2xl">✓</div>
         <h2 class="text-2xl font-bold text-white mb-1">VOUS ÊTES INSCRIT !</h2>
-        <p id="registered-name" class="text-amber-400 font-bold text-lg mb-6"></p>
-        <div class="text-sm text-slate-400 animate-pulse font-medium">En attente du QCM...</div>
+        <p id="registered-name" class="text-amber-400 font-bold text-lg mb-2"></p>
+        <p class="text-emerald-400 font-bold text-sm mb-6">Score : <span id="mobile-current-score">0</span> pts</p>
+        <div class="text-sm text-slate-400 animate-pulse font-medium">En attente du système...</div>
       </div>
 
+      <!-- ÉCRAN DE RÉPONSE -->
       <div id="mobile-question-screen" class="hidden text-left">
         <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-800">
           <span class="text-xs font-bold text-amber-400 uppercase">Question Active</span>
@@ -105,8 +117,19 @@
         </div>
         <h3 id="mobile-q-text" class="text-base font-bold text-white mb-6 leading-snug"></h3>
         <div id="mobile-options-container" class="space-y-3 mb-6"></div>
-        <div id="mobile-answer-status" class="hidden p-3 bg-emerald-500/20 border border-emerald-500/40 rounded-xl text-center text-xs font-bold text-emerald-300">
-          ✓ Réponse enregistrée !
+        <div id="mobile-answer-status" class="hidden p-3 bg-slate-800 border border-slate-600 rounded-xl text-center text-xs font-bold text-slate-300">
+          Réponse enregistrée. Attente des résultats...
+        </div>
+      </div>
+
+      <!-- ÉCRAN FEEDBACK RÉSULTAT (NOUVEAU) -->
+      <div id="mobile-feedback-screen" class="hidden py-8">
+        <div id="feedback-box" class="p-8 rounded-3xl text-center border-2">
+          <h2 id="feedback-title" class="text-3xl font-black mb-2 text-white"></h2>
+          <p id="feedback-points" class="text-lg font-bold mb-6 text-white"></p>
+          <div class="text-sm font-semibold text-slate-200">
+            Score Total : <span id="feedback-total" class="text-xl font-black"></span> pts
+          </div>
         </div>
       </div>
     </div>
@@ -136,6 +159,9 @@
             <div class="text-xs text-slate-400 mb-1">Participants Inscrits</div>
             <div id="admin-count-display" class="text-2xl font-black text-emerald-400">0</div>
           </div>
+          <button onclick="showLeaderboard()" class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg text-xs uppercase tracking-wider transition">
+            🏆 Afficher Classement
+          </button>
         </div>
       </div>
 
@@ -149,18 +175,19 @@
           <button onclick="startQuestion()" class="py-3 px-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition">▶ Lancer QCM</button>
           <button onclick="lockAnswers()" class="py-3 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition">🔒 Verrouiller</button>
           <button onclick="revealAnswer()" class="py-3 px-4 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition">👁 Révéler Rép.</button>
-          <button onclick="resetLobby()" class="py-3 px-4 bg-rose-500 hover:bg-rose-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition">↺ Retour Lobby</button>
+          <button onclick="resetLobby()" class="py-3 px-4 bg-slate-700 hover:bg-slate-600 text-white font-black rounded-xl text-xs uppercase tracking-wider transition">↺ Retour Lobby</button>
         </div>
       </div>
 
-      <!-- CRÉATION DE QUESTIONS -->
+      <!-- CRÉATION DE QUESTIONS (AVEC POINTS) -->
       <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
-        <h3 class="text-sm font-bold uppercase tracking-wider text-emerald-400 mb-4">+ Ajouter une Question à la Banque</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <input type="text" id="new-q-cat" placeholder="Catégorie (ex: Neurologie)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-emerald-400">
-          <input type="text" id="new-q-round" placeholder="Round (ex: ROUND 2)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-emerald-400">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-emerald-400 mb-4">+ Ajouter une Question</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <input type="text" id="new-q-cat" placeholder="Catégorie (ex: Urgences)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+          <input type="text" id="new-q-round" placeholder="Round (ex: ROUND 2)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+          <input type="number" id="new-q-points" placeholder="Points" value="10" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white font-bold text-emerald-400">
         </div>
-        <textarea id="new-q-text" placeholder="Énoncé de la question..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white mb-4 focus:border-emerald-400 h-20"></textarea>
+        <textarea id="new-q-text" placeholder="Énoncé de la question..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white mb-4 h-20"></textarea>
         
         <div class="grid grid-cols-2 gap-4 mb-4">
           <input type="text" id="new-q-optA" placeholder="Option A" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
@@ -169,19 +196,19 @@
           <input type="text" id="new-q-optD" placeholder="Option D" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <select id="new-q-correct" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
             <option value="A">La réponse correcte est A</option>
             <option value="B">La réponse correcte est B</option>
             <option value="C">La réponse correcte est C</option>
             <option value="D">La réponse correcte est D</option>
           </select>
-          <input type="number" id="new-q-timer" placeholder="Temps (secondes)" value="20" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+          <input type="number" id="new-q-timer" placeholder="Temps (sec)" value="20" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
         </div>
         
-        <textarea id="new-q-exp" placeholder="Explication clinique affichée à la fin..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white mb-4 focus:border-emerald-400 h-16"></textarea>
+        <textarea id="new-q-exp" placeholder="Explication clinique..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white mb-4 h-16"></textarea>
         
-        <button onclick="saveNewQuestion()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-bold rounded-xl text-sm uppercase tracking-wider transition">
+        <button onclick="saveNewQuestion()" class="w-full py-3 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/50 text-emerald-400 font-bold rounded-xl text-sm uppercase tracking-wider transition">
           💾 Enregistrer la Question
         </button>
       </div>
@@ -202,16 +229,19 @@
     let timerInterval = null;
     let questionBank = [];
 
+    // Variables pour l'étudiant mobile
+    let myParticipantId = null;
+    let myScore = 0;
+    let myAnswer = null;
+
     const localSync = new BroadcastChannel('fmpt_local_sync');
 
     // ========================================================
-    // 2. INITIALISATION ET BANQUE DE QUESTIONS
+    // 2. INITIALISATION
     // ========================================================
     window.onload = function() {
-      const currentUrl = window.location.origin;
-      const joinUrl = currentUrl + "?view=join";
+      const joinUrl = window.location.origin + "?view=join";
       document.getElementById('live-url-display').innerText = joinUrl;
-
       if(document.getElementById("real-qrcode")) {
         new QRCode(document.getElementById("real-qrcode"), { text: joinUrl, width: 180, height: 180, colorDark : "#060B19", colorLight : "#ffffff" });
       }
@@ -226,7 +256,7 @@
     function loadQuestionBank() {
       const defaultQuestions = [
         {
-          id: "q_default_1", category: "Cardiologie", round: "ROUND 1", timer: 20,
+          id: "q_default_1", category: "Cardiologie", round: "ROUND 1", timer: 20, points: 10,
           text: "Quel signe ECG est le plus spécifique d'un SCA ST+ ?",
           options: [
             { letter: "A", text: "Onde T négative symétrique" }, { letter: "B", text: "Sus-décalage ST avec miroir" },
@@ -248,7 +278,7 @@
       questionBank.forEach(q => {
         const opt = document.createElement('option');
         opt.value = q.id;
-        opt.innerText = `[${q.category}] ${q.text.substring(0,50)}...`;
+        opt.innerText = `[${q.points}pts] ${q.category} - ${q.text.substring(0,40)}...`;
         qSelect.appendChild(opt);
       });
     }
@@ -259,6 +289,7 @@
         category: document.getElementById('new-q-cat').value || 'Général',
         round: document.getElementById('new-q-round').value || 'ROUND X',
         timer: parseInt(document.getElementById('new-q-timer').value) || 20,
+        points: parseInt(document.getElementById('new-q-points').value) || 10,
         text: document.getElementById('new-q-text').value,
         options: [
           { letter: "A", text: document.getElementById('new-q-optA').value },
@@ -270,64 +301,41 @@
         explanation: document.getElementById('new-q-exp').value
       };
 
-      if (!newQ.text || !newQ.options[0].text) return alert("Veuillez remplir l'énoncé et les options.");
+      if (!newQ.text || !newQ.options[0].text) return alert("Veuillez remplir l'énoncé.");
 
       const saved = localStorage.getItem('fmpt_custom_questions');
       const customQuestions = saved ? JSON.parse(saved) : [];
       customQuestions.push(newQ);
       localStorage.setItem('fmpt_custom_questions', JSON.stringify(customQuestions));
-
       loadQuestionBank();
       alert("Question ajoutée avec succès !");
-      
-      document.getElementById('new-q-text').value = '';
-      document.getElementById('new-q-optA').value = ''; document.getElementById('new-q-optB').value = '';
-      document.getElementById('new-q-optC').value = ''; document.getElementById('new-q-optD').value = '';
     }
 
     // ========================================================
-    // 3. SYNCHRONISATION SUPABASE ET TEMPS RÉEL
+    // 3. SYNCHRONISATION
     // ========================================================
     async function setupConnection() {
       try {
         db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
-        // Charger le nombre initial depuis Supabase
-        const { count, error } = await db
-          .from('participants')
-          .select('*', { count: 'exact', head: true })
-          .eq('competition_code', 'MED26');
-        
-        if (!error && count !== null) {
-          updateCountUI(count);
-        }
+        const { count } = await db.from('participants').select('*', { count: 'exact', head: true }).eq('competition_code', 'MED26');
+        if (count !== null) updateCountUI(count);
 
-        // Écouter les nouveaux inscrits en direct
-        db.channel('public:participants')
-          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'participants' }, payload => {
-            if(payload.new.competition_code === 'MED26') {
-              participantCount++;
-              updateCountUI(participantCount);
-            }
-          }).subscribe();
+        db.channel('public:participants').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'participants' }, payload => {
+          if(payload.new.competition_code === 'MED26') { participantCount++; updateCountUI(participantCount); }
+        }).subscribe();
 
-        // Écouter les événements du quiz en direct
-        db.channel('competition_live')
-          .on('broadcast', { event: 'EVENT_TRIGGER' }, payload => handleRemoteEvent(payload.payload))
+        db.channel('competition_live').on('broadcast', { event: 'EVENT_TRIGGER' }, payload => handleRemoteEvent(payload.payload))
           .subscribe((status) => {
             if(status === 'SUBSCRIBED') {
               const badge = document.getElementById('db-status');
               badge.className = "px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
-              badge.innerText = "🟢 Supabase Connecté (Multi-Appareils OK)";
+              badge.innerText = "🟢 Supabase Connecté";
             }
           });
-      } catch(e) {
-        console.error("Erreur de connexion Supabase:", e);
-      }
+      } catch(e) { console.error(e); }
 
-      localSync.onmessage = (e) => {
-        if(e.data.type === 'EVENT_TRIGGER') handleRemoteEvent(e.data.payload);
-      };
+      localSync.onmessage = (e) => { if(e.data.type === 'EVENT_TRIGGER') handleRemoteEvent(e.data.payload); };
     }
 
     function updateCountUI(count) {
@@ -338,9 +346,7 @@
 
     async function emitEvent(event_name, data = null) {
       const payload = { action: event_name, data: data };
-      if(db) {
-        await db.channel('competition_live').send({ type: 'broadcast', event: 'EVENT_TRIGGER', payload: payload });
-      }
+      if(db) await db.channel('competition_live').send({ type: 'broadcast', event: 'EVENT_TRIGGER', payload: payload });
       localSync.postMessage({ type: 'EVENT_TRIGGER', payload: payload });
       handleRemoteEvent(payload);
     }
@@ -350,6 +356,7 @@
       if(payload.action === 'LOCK_ANSWERS') executeLock();
       if(payload.action === 'REVEAL_ANSWER') executeReveal(payload.data);
       if(payload.action === 'RESET_LOBBY') executeReset();
+      if(payload.action === 'SHOW_LEADERBOARD') executeLeaderboard();
     }
 
     // ========================================================
@@ -362,12 +369,13 @@
     function lockAnswers() { emitEvent('LOCK_ANSWERS'); }
     function revealAnswer() {
       const q = questionBank.find(item => item.id === document.getElementById('admin-q-select').value);
-      if(q) emitEvent('REVEAL_ANSWER', { correct: q.correct, explanation: q.explanation });
+      if(q) emitEvent('REVEAL_ANSWER', { correct: q.correct, explanation: q.explanation, points: q.points });
     }
     function resetLobby() { emitEvent('RESET_LOBBY'); }
+    function showLeaderboard() { emitEvent('SHOW_LEADERBOARD'); }
 
     // ========================================================
-    // 5. RENDU VISUEL ET CHRONOMÈTRE
+    // 5. GESTION DES PARTICIPANTS ET RÉSULTATS
     // ========================================================
     async function joinCompetition() {
       const name = document.getElementById('student-name').value.trim();
@@ -376,12 +384,15 @@
       document.getElementById('join-btn').innerText = "Connexion...";
       
       if(db) {
-        const { error } = await db.from('participants').insert([{ nom: name, competition_code: 'MED26' }]);
-        if(error) {
-          alert("Erreur d'inscription: " + error.message);
-          document.getElementById('join-btn').innerText = "Rejoindre le Challenge";
-          return;
-        }
+        // Enregistre et récupère l'ID du joueur pour le score
+        const { data, error } = await db.from('participants')
+          .insert([{ nom: name, competition_code: 'MED26', score: 0 }])
+          .select()
+          .single();
+          
+        if(error) { alert("Erreur: " + error.message); return; }
+        myParticipantId = data.id;
+        myScore = 0;
       }
       
       document.getElementById('registered-name').innerText = name;
@@ -391,12 +402,17 @@
 
     function renderLiveQuestion(q) {
       currentQuestion = q;
+      myAnswer = null; // Réinitialise la réponse
+
+      // Projecteur
       document.getElementById('live-lobby').classList.add('hidden');
+      document.getElementById('live-leaderboard-screen').classList.add('hidden');
       document.getElementById('live-question-screen').classList.remove('hidden');
       document.getElementById('live-explanation-box').classList.add('hidden');
 
       document.getElementById('live-round-tag').innerText = q.round;
       document.getElementById('live-category-tag').innerText = q.category;
+      document.getElementById('live-points-tag').innerText = q.points + " Pts";
       document.getElementById('live-question-text').innerText = q.text;
 
       const grid = document.getElementById('live-options-grid');
@@ -405,8 +421,9 @@
         grid.innerHTML += `<div id="opt-box-${opt.letter}" class="p-5 bg-slate-900 border border-slate-800 rounded-2xl flex items-center gap-4 transition"><span class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold border border-amber-500/30">${opt.letter}</span><span class="text-white font-semibold text-lg">${opt.text}</span></div>`;
       });
 
-      document.getElementById('mobile-form').classList.add('hidden');
+      // Mobile
       document.getElementById('mobile-waiting').classList.add('hidden');
+      document.getElementById('mobile-feedback-screen').classList.add('hidden');
       document.getElementById('mobile-question-screen').classList.remove('hidden');
       document.getElementById('mobile-answer-status').classList.add('hidden');
       document.getElementById('mobile-q-text').innerText = q.text;
@@ -420,13 +437,15 @@
     }
 
     function submitAnswer(letter) {
+      myAnswer = letter; // Sauvegarde le choix localement
+      
       currentQuestion.options.forEach(opt => {
         const btn = document.getElementById(`m-btn-${opt.letter}`);
         if(btn) { btn.disabled = true; btn.classList.add('opacity-50'); }
       });
       const selected = document.getElementById(`m-btn-${letter}`);
       selected.classList.remove('opacity-50');
-      selected.classList.add('border-emerald-400', 'bg-emerald-500/20');
+      selected.classList.add('border-amber-400', 'bg-amber-500/20');
       document.getElementById('mobile-answer-status').classList.remove('hidden');
     }
 
@@ -442,7 +461,8 @@
       }
     }
 
-    function executeReveal(payload) {
+    async function executeReveal(payload) {
+      // 1. Révélation Projecteur
       const correctBox = document.getElementById(`opt-box-${payload.correct}`);
       if (correctBox) {
         correctBox.classList.remove('bg-slate-900', 'border-slate-800');
@@ -450,13 +470,81 @@
       }
       document.getElementById('live-explanation-text').innerText = payload.explanation;
       document.getElementById('live-explanation-box').classList.remove('hidden');
+
+      // 2. Révélation et Score Mobile (Si l'étudiant est sur l'écran question)
+      if(!document.getElementById('mobile-question-screen').classList.contains('hidden')) {
+        document.getElementById('mobile-question-screen').classList.add('hidden');
+        document.getElementById('mobile-feedback-screen').classList.remove('hidden');
+
+        const box = document.getElementById('feedback-box');
+        const title = document.getElementById('feedback-title');
+        const points = document.getElementById('feedback-points');
+
+        if(myAnswer === payload.correct) {
+          // Bonne réponse
+          myScore += payload.points;
+          box.className = "p-8 rounded-3xl text-center bg-emerald-500/20 border-2 border-emerald-500";
+          title.innerText = "✅ CORRECT !";
+          title.className = "text-3xl font-black mb-2 text-emerald-400";
+          points.innerText = `+${payload.points} Points gagnés`;
+          
+          // Mise à jour du score dans la base de données !
+          if(db && myParticipantId) {
+            await db.from('participants').update({ score: myScore }).eq('id', myParticipantId);
+          }
+        } else {
+          // Mauvaise réponse ou pas de réponse
+          box.className = "p-8 rounded-3xl text-center bg-rose-500/20 border-2 border-rose-500";
+          title.innerText = "❌ INCORRECT";
+          title.className = "text-3xl font-black mb-2 text-rose-400";
+          points.innerText = "La bonne réponse était : " + payload.correct;
+        }
+        
+        document.getElementById('feedback-total').innerText = myScore;
+        document.getElementById('mobile-current-score').innerText = myScore;
+      }
+    }
+
+    async function executeLeaderboard() {
+      document.getElementById('live-lobby').classList.add('hidden');
+      document.getElementById('live-question-screen').classList.add('hidden');
+      document.getElementById('live-leaderboard-screen').classList.remove('hidden');
+
+      // Récupérer le Top 10 sur Supabase
+      if(db) {
+        const { data, error } = await db.from('participants')
+          .select('nom, score')
+          .eq('competition_code', 'MED26')
+          .order('score', { ascending: false })
+          .limit(10);
+          
+        if(data) {
+          const list = document.getElementById('leaderboard-list');
+          list.innerHTML = '';
+          data.forEach((p, index) => {
+            const isTop = index === 0 ? "bg-amber-500 text-slate-950 font-black gold-glow scale-105" : "bg-slate-900 text-white font-bold border border-slate-700";
+            list.innerHTML += `
+              <div class="flex justify-between items-center p-5 rounded-2xl ${isTop} transition">
+                <div class="flex items-center gap-4">
+                  <span class="text-xl">#${index + 1}</span>
+                  <span class="text-xl tracking-wide">${p.nom}</span>
+                </div>
+                <div class="text-2xl">${p.score} pts</div>
+              </div>
+            `;
+          });
+        }
+      }
     }
 
     function executeReset() {
       clearInterval(timerInterval);
       document.getElementById('live-question-screen').classList.add('hidden');
+      document.getElementById('live-leaderboard-screen').classList.add('hidden');
       document.getElementById('live-lobby').classList.remove('hidden');
+      
       document.getElementById('mobile-question-screen').classList.add('hidden');
+      document.getElementById('mobile-feedback-screen').classList.add('hidden');
       document.getElementById('mobile-waiting').classList.remove('hidden');
     }
 
