@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FMPT — Challenge QCM Médical | التواصل الصحي</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Ajout de Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -34,7 +33,9 @@
 
   <!-- VIEW 1: LIVE PROJECTOR SCREEN (/live) -->
   <main id="view-live" class="my-8 flex-1 flex flex-col justify-center items-center">
-    <div class="glass-panel gold-glow rounded-3xl p-8 md:p-12 w-full max-w-4xl text-center border border-amber-500/30">
+    
+    <!-- LOBBY STATE (AVANT LE DÉBUT) -->
+    <div id="live-lobby" class="glass-panel gold-glow rounded-3xl p-8 md:p-12 w-full max-w-4xl text-center border border-amber-500/30">
       <div class="text-xs font-bold uppercase tracking-widest text-amber-400 mb-2">Grand Amphithéâtre FMPT</div>
       <h1 class="text-3xl md:text-5xl font-black text-white mb-6">MEDICAL CHALLENGE 2026</h1>
       
@@ -46,22 +47,57 @@
           </svg>
         </div>
         <div class="text-xl font-black text-amber-400 tracking-wider mb-1">SCANNEZ POUR REJOINDRE</div>
+        <div class="text-sm font-semibold text-slate-300 bg-slate-900/80 px-4 py-1.5 rounded-lg border border-slate-800 mb-6 font-mono">
+          https://fmpt-qcm.vercel.app
+        </div>
         
-        <div class="bg-slate-900/90 px-8 py-4 rounded-2xl border border-slate-800 flex items-center gap-4 mt-6">
+        <div class="bg-slate-900/90 px-8 py-4 rounded-2xl border border-slate-800 flex items-center gap-4">
           <div class="w-4 h-4 rounded-full bg-emerald-500 animate-ping"></div>
           <span id="live-count-display" class="text-3xl md:text-5xl font-black text-white">0</span>
           <span class="text-slate-400 font-bold uppercase tracking-wider text-sm">PARTICIPANTS CONNECTÉS</span>
         </div>
       </div>
     </div>
+
+    <!-- QUESTION ACTIVE STATE (AFFICHAGE DU QCM) -->
+    <div id="live-question-screen" class="hidden glass-panel rounded-3xl p-8 md:p-12 w-full max-w-5xl border border-slate-700">
+      <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-800">
+        <div>
+          <span id="live-round-tag" class="text-xs font-black uppercase tracking-widest bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full border border-amber-500/30">ROUND 1</span>
+          <span id="live-category-tag" class="ml-2 text-xs font-bold uppercase tracking-wider text-slate-400">Cardiologie</span>
+        </div>
+        <!-- Chronomètre circulaire -->
+        <div class="flex items-center gap-3 bg-slate-900 px-5 py-2 rounded-2xl border border-slate-800">
+          <span class="text-xs font-bold text-slate-400 uppercase">Temps :</span>
+          <span id="live-timer" class="text-3xl font-black text-amber-400 font-mono">20</span>
+        </div>
+      </div>
+
+      <!-- Enoncé de la question -->
+      <h2 id="live-question-text" class="text-2xl md:text-3xl font-bold text-white mb-8 leading-relaxed">
+        Chargement de la question...
+      </h2>
+
+      <!-- Options A, B, C, D -->
+      <div id="live-options-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <!-- Généré dynamiquement en JS -->
+      </div>
+
+      <!-- Explication Clinique (Révélée à la fin) -->
+      <div id="live-explanation-box" class="hidden p-6 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl mt-6">
+        <div class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-1">Explication Clinique :</div>
+        <p id="live-explanation-text" class="text-slate-200 text-sm leading-relaxed"></p>
+      </div>
+    </div>
   </main>
 
   <!-- VIEW 2: PARTICIPANT MOBILE (/join) -->
-  <main id="view-join" class="my-8 flex-1 flex justify-center items-center hidden">
+  <main id="view-join" class="my-8 flex-1 flex justify-center items-center">
     <div class="glass-panel rounded-3xl p-6 w-full max-w-md border border-slate-800 text-center">
       <div class="font-arabic text-3xl font-bold text-amber-400 mb-1">التواصل الصحي</div>
       <div class="text-xs text-slate-400 mb-6 font-semibold uppercase tracking-wider">Medical Challenge — FMPT</div>
 
+      <!-- Formulaire d'inscription -->
       <div id="mobile-form">
         <div class="text-left mb-4">
           <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Nom & Prénom *</label>
@@ -72,11 +108,29 @@
         </button>
       </div>
 
+      <!-- Écran d'attente -->
       <div id="mobile-waiting" class="hidden py-8">
         <div class="w-16 h-16 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-500/30 font-bold text-2xl">✓</div>
         <h2 class="text-2xl font-bold text-white mb-1">VOUS ÊTES INSCRIT !</h2>
         <p id="registered-name" class="text-amber-400 font-bold text-lg mb-6"></p>
-        <div class="text-sm text-slate-400 animate-pulse font-medium">En attente du lancement par l'organisateur...</div>
+        <div class="text-sm text-slate-400 animate-pulse font-medium">En attente de la première question...</div>
+      </div>
+
+      <!-- Interface de Réponse Mobile -->
+      <div id="mobile-question-screen" class="hidden text-left">
+        <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-800">
+          <span id="mobile-q-num" class="text-xs font-bold text-amber-400 uppercase">Question Active</span>
+          <span id="mobile-timer" class="text-lg font-black text-amber-400 font-mono">20s</span>
+        </div>
+        <h3 id="mobile-q-text" class="text-base font-bold text-white mb-6 leading-snug"></h3>
+        
+        <div id="mobile-options-container" class="space-y-3 mb-6">
+          <!-- Les 4 boutons A, B, C, D -->
+        </div>
+
+        <div id="mobile-answer-status" class="hidden p-3 bg-emerald-500/20 border border-emerald-500/40 rounded-xl text-center text-xs font-bold text-emerald-300">
+          ✓ Réponse enregistrée avec succès !
+        </div>
       </div>
     </div>
   </main>
@@ -92,90 +146,322 @@
           <div class="text-2xl font-black text-amber-400 font-mono">MED26</div>
         </div>
         <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
-          <div class="text-xs text-slate-400 mb-1">Participants Connectés (Live Database)</div>
+          <div class="text-xs text-slate-400 mb-1">Participants Inscrits</div>
           <div id="admin-count-display" class="text-2xl font-black text-emerald-400">0</div>
         </div>
       </div>
 
-      <div class="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
-        <p class="text-emerald-400 text-sm font-semibold">✅ Supabase est connecté. Ouvrez le lien sur votre téléphone et rejoignez, le compteur augmentera tout seul !</p>
+      <!-- PANNEAU DE CONTRÔLE DES QUESTIONS -->
+      <div class="bg-slate-900/90 p-6 rounded-2xl border border-slate-800 mb-6">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-amber-400 mb-4">Banque de Questions QCM FMPT</h3>
+        
+        <div class="mb-4">
+          <label class="block text-xs font-semibold text-slate-400 mb-2">Sélectionner un QCM à diffuser :</label>
+          <select id="admin-q-select" onchange="previewSelectedQuestion()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white font-medium focus:outline-none focus:border-amber-400">
+            <!-- Rempli par JS -->
+          </select>
+        </div>
+
+        <!-- Boutons d'action Live -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <button onclick="startQuestion()" class="py-3 px-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition">
+            ▶ Lancer Question
+          </button>
+          <button onclick="lockAnswers()" class="py-3 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition">
+            🔒 Verrouiller
+          </button>
+          <button onclick="revealAnswer()" class="py-3 px-4 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition">
+            👁 Révéler
+          </button>
+          <button onclick="resetLobby()" class="py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs uppercase tracking-wider border border-slate-700 transition">
+            ↺ Retour Lobby
+          </button>
+        </div>
       </div>
     </div>
   </main>
 
   <script>
     // ==========================================
-    // 1. CONFIGURATION SUPABASE (VOS CLÉS ICI)
+    // 1. CONFIGURATION SUPABASE
     // ==========================================
     const SUPABASE_URL = 'https://jwfbudorqkoaoenzpdcg.supabase.co/rest/v1/'; 
     const SUPABASE_ANON_KEY = 'sb_publishable_c5txfs7T6ICtlV2OnIWZiA_WX3E5VFP';
 
     const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // ==========================================
+    // 2. BANQUE DE QUESTIONS MÉDICALES FMPT
+    // ==========================================
+    const QUESTION_BANK = [
+      {
+        id: "q1",
+        category: "Cardiologie",
+        round: "ROUND 1",
+        timer: 20,
+        text: "Quel signe électrocardiographique est le plus spécifique d'un Syndrome Coronarien Aigu avec sus-décalage du segment ST (SCA ST+) ?",
+        options: [
+          { letter: "A", text: "Onde T négative symétrique" },
+          { letter: "B", text: "Miroir ou sus-décalage de ST concordant" },
+          { letter: "C", text: "Sous-décalage de ST diffus" },
+          { letter: "D", text: "Bloc de branche droit isolé" }
+        ],
+        correct: "B",
+        explanation: "Le sus-décalage du segment ST avec image en miroir est le critère diagnostique majeur d'une occlusion coronaire aiguë nécessitant une revascularisation urgente."
+      },
+      {
+        id: "q2",
+        category: "Pharmacologie",
+        round: "ROUND 1",
+        timer: 20,
+        text: "Quel est l'antidote de première intention lors d'une intoxication aiguë au Paracétamol ?",
+        options: [
+          { letter: "A", text: "Naloxone" },
+          { letter: "B", text: "N-Acétylcystéine" },
+          { letter: "C", text: "Flumazénil" },
+          { letter: "D", text: "Atropine" }
+        ],
+        correct: "B",
+        explanation: "La N-Acétylcystéine régénère les stocks de glutathion hépatique pour neutraliser le métabolite toxique du paracétamol (NAPQI)."
+      },
+      {
+        id: "q3",
+        category: "Neurologie / Urgences",
+        round: "ROUND 2",
+        timer: 15,
+        text: "Devant un AVC ischémique aigu, quelle est la fenêtre thérapeutique maximale pour effectuer une thrombolyse IV par rt-PA ?",
+        options: [
+          { letter: "A", text: "3 heures" },
+          { letter: "B", text: "4 heures et demie (4h30)" },
+          { letter: "C", text: "6 heures" },
+          { letter: "D", text: "12 heures" }
+        ],
+        correct: "B",
+        explanation: "Selon les recommandations internationales, la thrombolyse intraveineuse par rt-PA doit être administrée dans les 4h30 suivant le début des symptômes."
+      }
+    ];
+
+    let currentQuestion = null;
+    let timerInterval = null;
     let participantCount = 0;
+    let selectedAnswer = null;
 
     // ==========================================
-    // 2. LOGIQUE DE L'APPLICATION
+    // 3. SYNCHRONISATION EN TEMPS RÉEL (REALTIME)
     // ==========================================
 
-    // Charger le nombre de participants au démarrage
-    async function loadInitialCount() {
-      const { count, error } = await supabase
-        .from('participants')
-        .select('*', { count: 'exact', head: true })
-        .eq('competition_code', 'MED26');
+    // Remplir le menu déroulant Admin
+    const qSelect = document.getElementById('admin-q-select');
+    QUESTION_BANK.forEach((q, idx) => {
+      const opt = document.createElement('option');
+      opt.value = q.id;
+      opt.innerText = `[${q.category}] Q${idx + 1} - ${q.text.substring(0, 50)}...`;
+      qSelect.appendChild(opt);
+    });
+
+    // Écouter les changements de la compétition (Broadcast & DB)
+    supabase
+      .channel('competition_live_channel')
+      .on('broadcast', { event: 'QUESTION_START' }, payload => handleQuestionStart(payload.payload))
+      .on('broadcast', { event: 'LOCK_ANSWERS' }, () => handleLockAnswers())
+      .on('broadcast', { event: 'REVEAL_ANSWER' }, payload => handleRevealAnswer(payload.payload))
+      .on('broadcast', { event: 'RESET_LOBBY' }, () => handleResetLobby())
+      .subscribe();
+
+    // ==========================================
+    // 4. FONCTIONS ORGANISATEUR (ADMIN)
+    // ==========================================
+
+    async function startQuestion() {
+      const selectedId = document.getElementById('admin-q-select').value;
+      const q = QUESTION_BANK.find(item => item.id === selectedId);
+      if (!q) return;
+
+      // Envoyer l'événement en direct à tous les téléphones et au projecteur !
+      await supabase.channel('competition_live_channel').send({
+        type: 'broadcast',
+        event: 'QUESTION_START',
+        payload: q
+      });
+    }
+
+    async function lockAnswers() {
+      await supabase.channel('competition_live_channel').send({
+        type: 'broadcast',
+        event: 'LOCK_ANSWERS'
+      });
+    }
+
+    async function revealAnswer() {
+      const selectedId = document.getElementById('admin-q-select').value;
+      const q = QUESTION_BANK.find(item => item.id === selectedId);
       
-      if (!error && count !== null) {
-        participantCount = count;
-        updateCounters();
+      await supabase.channel('competition_live_channel').send({
+        type: 'broadcast',
+        event: 'REVEAL_ANSWER',
+        payload: { correct: q.correct, explanation: q.explanation }
+      });
+    }
+
+    async function resetLobby() {
+      await supabase.channel('competition_live_channel').send({
+        type: 'broadcast',
+        event: 'RESET_LOBBY'
+      });
+    }
+
+    // ==========================================
+    // 5. GESTION DU REÇU EN DIRECT (CLIENT/PROJECTEUR)
+    // ==========================================
+
+    function handleQuestionStart(q) {
+      currentQuestion = q;
+      selectedAnswer = null;
+
+      // Masquer le lobby, afficher l'écran de question sur le projecteur
+      document.getElementById('live-lobby').classList.add('hidden');
+      document.getElementById('live-question-screen').classList.remove('hidden');
+      document.getElementById('live-explanation-box').classList.add('hidden');
+
+      // Mettre à jour les textes du projecteur
+      document.getElementById('live-round-tag').innerText = q.round;
+      document.getElementById('live-category-tag').innerText = q.category;
+      document.getElementById('live-question-text').innerText = q.text;
+
+      // Générer les options A, B, C, D sur le projecteur
+      const grid = document.getElementById('live-options-grid');
+      grid.innerHTML = '';
+      q.options.forEach(opt => {
+        grid.innerHTML += `
+          <div id="opt-box-${opt.letter}" class="p-5 bg-slate-900 border border-slate-800 rounded-2xl flex items-center gap-4 text-left transition-all">
+            <span class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 font-black flex items-center justify-center border border-amber-500/30">${opt.letter}</span>
+            <span class="text-white font-semibold text-lg">${opt.text}</span>
+          </div>
+        `;
+      });
+
+      // Mettre à jour l'interface Mobile
+      document.getElementById('mobile-form').classList.add('hidden');
+      document.getElementById('mobile-waiting').classList.add('hidden');
+      document.getElementById('mobile-question-screen').classList.remove('hidden');
+      document.getElementById('mobile-answer-status').classList.add('hidden');
+      document.getElementById('mobile-q-text').innerText = q.text;
+
+      const mContainer = document.getElementById('mobile-options-container');
+      mContainer.innerHTML = '';
+      q.options.forEach(opt => {
+        mContainer.innerHTML += `
+          <button id="m-btn-${opt.letter}" onclick="submitAnswer('${opt.letter}')" class="w-full p-4 bg-slate-900 border border-slate-700 hover:border-amber-400 rounded-2xl text-left text-white font-bold flex items-center gap-3 transition">
+            <span class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm">${opt.letter}</span>
+            <span>${opt.text}</span>
+          </button>
+        `;
+      });
+
+      // Lancer le chrono
+      startTimer(q.timer);
+    }
+
+    function submitAnswer(letter) {
+      selectedAnswer = letter;
+      
+      // Désactiver tous les boutons
+      currentQuestion.options.forEach(opt => {
+        const btn = document.getElementById(`m-btn-${opt.letter}`);
+        if (btn) {
+          btn.disabled = true;
+          btn.classList.add('opacity-50');
+        }
+      });
+
+      // Mettre en évidence le choix
+      const selectedBtn = document.getElementById(`m-btn-${letter}`);
+      if (selectedBtn) {
+        selectedBtn.classList.remove('opacity-50');
+        selectedBtn.classList.add('border-emerald-400', 'bg-emerald-500/20');
+      }
+
+      document.getElementById('mobile-answer-status').classList.remove('hidden');
+    }
+
+    function handleLockAnswers() {
+      clearInterval(timerInterval);
+      document.getElementById('live-timer').innerText = "00";
+      document.getElementById('mobile-timer').innerText = "LOCK";
+
+      // Empêcher toute nouvelle réponse sur mobile
+      if (currentQuestion) {
+        currentQuestion.options.forEach(opt => {
+          const btn = document.getElementById(`m-btn-${opt.letter}`);
+          if (btn) btn.disabled = true;
+        });
       }
     }
 
-    // Écouter les nouveaux étudiants qui rejoignent en DIRECT (Realtime)
+    function handleRevealAnswer(payload) {
+      // Mettre la bonne réponse en vert brillant sur le projecteur
+      const correctBox = document.getElementById(`opt-box-${payload.correct}`);
+      if (correctBox) {
+        correctBox.classList.remove('bg-slate-900', 'border-slate-800');
+        correctBox.classList.add('bg-emerald-500/20', 'border-emerald-400', 'gold-glow');
+      }
+
+      // Afficher l'explication clinique
+      document.getElementById('live-explanation-text').innerText = payload.explanation;
+      document.getElementById('live-explanation-box').classList.remove('hidden');
+    }
+
+    function handleResetLobby() {
+      clearInterval(timerInterval);
+      document.getElementById('live-question-screen').classList.add('hidden');
+      document.getElementById('live-lobby').classList.remove('hidden');
+
+      document.getElementById('mobile-question-screen').classList.add('hidden');
+      document.getElementById('mobile-waiting').classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+      clearInterval(timerInterval);
+      let timeLeft = seconds;
+      
+      document.getElementById('live-timer').innerText = timeLeft;
+      document.getElementById('mobile-timer').innerText = timeLeft + "s";
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        if (timeLeft >= 0) {
+          document.getElementById('live-timer').innerText = timeLeft < 10 ? "0" + timeLeft : timeLeft;
+          document.getElementById('mobile-timer').innerText = timeLeft + "s";
+        } else {
+          clearInterval(timerInterval);
+          handleLockAnswers();
+        }
+      }, 1000);
+    }
+
+    // Compteur de participants
     supabase
       .channel('public:participants')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'participants' }, payload => {
-        console.log('Nouveau participant !', payload.new);
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'participants' }, () => {
         participantCount++;
-        updateCounters();
+        document.getElementById('live-count-display').innerText = participantCount;
+        document.getElementById('admin-count-display').innerText = participantCount;
       })
       .subscribe();
 
-    // Quand l'étudiant clique sur "Rejoindre"
     async function joinCompetition() {
       const name = document.getElementById('student-name').value.trim();
-      const btn = document.getElementById('join-btn');
-
       if (!name) return alert('Veuillez entrer votre nom.');
       
-      btn.innerText = "Connexion...";
-      btn.disabled = true;
+      document.getElementById('join-btn').innerText = "Connexion...";
 
-      // Envoyer le nom à la base de données
-      const { data, error } = await supabase
-        .from('participants')
-        .insert([{ nom: name, competition_code: 'MED26' }]);
+      await supabase.from('participants').insert([{ nom: name, competition_code: 'MED26' }]);
 
-      if (error) {
-        alert("Erreur de connexion : " + error.message);
-        btn.innerText = "Rejoindre le Challenge";
-        btn.disabled = false;
-        return;
-      }
-
-      // Succès ! Afficher l'écran d'attente
       document.getElementById('registered-name').innerText = name;
       document.getElementById('mobile-form').classList.add('hidden');
       document.getElementById('mobile-waiting').classList.remove('hidden');
     }
 
-    // Mise à jour de l'affichage
-    function updateCounters() {
-      document.getElementById('live-count-display').innerText = participantCount;
-      document.getElementById('admin-count-display').innerText = participantCount;
-    }
-
-    // Changement d'écran
     function switchView(viewName) {
       document.getElementById('view-live').classList.add('hidden');
       document.getElementById('view-join').classList.add('hidden');
@@ -191,10 +477,6 @@
       if (viewName === 'join') document.getElementById('btn-join').className = "px-5 py-2 rounded-lg bg-cyan-500 text-slate-950 font-bold shadow-md transition";
       if (viewName === 'admin') document.getElementById('btn-admin').className = "px-5 py-2 rounded-lg bg-emerald-500 text-slate-950 font-bold shadow-md transition";
     }
-
-    // Lancer le chargement initial
-    loadInitialCount();
-
   </script>
 </body>
 </html>
