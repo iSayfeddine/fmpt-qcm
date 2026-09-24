@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FMPT — Challenge QCM Médical | التواصل الصحي</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Ajout de Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     body { background-color: #060B19; color: #F1F5F9; font-family: 'Inter', sans-serif; }
@@ -16,7 +18,7 @@
 
 <body class="min-h-screen flex flex-col justify-between p-4 md:p-8">
 
-  <!-- TOP BAR: SELECT VIEW -->
+  <!-- TOP BAR -->
   <header class="flex flex-col md:flex-row items-center justify-between gap-4 pb-6 border-b border-slate-800">
     <div>
       <div class="font-arabic text-3xl font-extrabold text-amber-400 tracking-wide">التواصل الصحي</div>
@@ -36,22 +38,16 @@
       <div class="text-xs font-bold uppercase tracking-widest text-amber-400 mb-2">Grand Amphithéâtre FMPT</div>
       <h1 class="text-3xl md:text-5xl font-black text-white mb-6">MEDICAL CHALLENGE 2026</h1>
       
-      <!-- QR Code & URL Card -->
       <div class="flex flex-col items-center my-6">
         <div class="bg-white p-6 rounded-2xl shadow-2xl mb-4 border-4 border-amber-400">
           <svg id="qr-svg" width="180" height="180" viewBox="0 0 21 21" shape-rendering="crispEdges">
-            <!-- Inline SVG QR Code Matrix -->
             <rect width="21" height="21" fill="#FFFFFF"/>
             <path fill="#060B19" d="M0,0h7v7h-7z M1,1h5v5h-5z M2,2h3v3h-3z M14,0h7v7h-7z M15,1h5v5h-5z M16,2h3v3h-3z M0,14h7v7h-7z M1,15h5v5h-5z M2,16h3v3h-3z M8,0h2v1h-2z M11,0h1v3h-1z M9,2h2v1h-2z M8,4h3v1h-3z M12,4h1v2h-1z M8,6h1v1h-1z M10,6h3v1h-3z M14,8h2v1h-2z M17,8h1v2h-1z M19,8h2v1h-2z M8,9h1v2h-1z M10,9h3v1h-3z M15,10h3v1h-3z M0,8h2v1h-2z M3,8h2v2h-2z M6,8h1v1h-1z M1,10h2v1h-2z M4,11h3v1h-3z M9,12h2v1h-2z M12,12h2v1h-2z M15,12h1v2h-1z M18,12h2v1h-2z M8,14h2v1h-2z M11,14h2v2h-2z M15,14h1v1h-1z M17,14h3v1h-3z M9,16h1v2h-1z M13,16h2v1h-2z M16,16h1v3h-1z M19,16h1v1h-1z M8,18h3v1h-3z M12,18h2v2h-2z M18,18h3v1h-3z M10,20h2v1h-2z M15,20h4v1h-4z"/>
           </svg>
         </div>
         <div class="text-xl font-black text-amber-400 tracking-wider mb-1">SCANNEZ POUR REJOINDRE</div>
-        <div class="text-sm font-semibold text-slate-300 bg-slate-900/80 px-4 py-1.5 rounded-lg border border-slate-800 mb-6 font-mono" id="live-url-display">
-          https://fmpt-challenge.vercel.app
-        </div>
         
-        <!-- Live Counter -->
-        <div class="bg-slate-900/90 px-8 py-4 rounded-2xl border border-slate-800 flex items-center gap-4">
+        <div class="bg-slate-900/90 px-8 py-4 rounded-2xl border border-slate-800 flex items-center gap-4 mt-6">
           <div class="w-4 h-4 rounded-full bg-emerald-500 animate-ping"></div>
           <span id="live-count-display" class="text-3xl md:text-5xl font-black text-white">0</span>
           <span class="text-slate-400 font-bold uppercase tracking-wider text-sm">PARTICIPANTS CONNECTÉS</span>
@@ -71,7 +67,7 @@
           <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Nom & Prénom *</label>
           <input type="text" id="student-name" placeholder="Ex: Dr. Sarah Amrani" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3.5 text-white focus:outline-none focus:border-amber-400 font-medium">
         </div>
-        <button onclick="joinCompetition()" class="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-lg shadow-lg transition">
+        <button id="join-btn" onclick="joinCompetition()" class="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-lg shadow-lg transition">
           Rejoindre le Challenge
         </button>
       </div>
@@ -90,39 +86,96 @@
     <div class="glass-panel rounded-3xl p-8 w-full max-w-3xl border border-slate-800">
       <h2 class="text-2xl font-extrabold text-white mb-6">Tableau de Contrôle Organisateur</h2>
       
-      <!-- Domain Link Config Box -->
-      <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-5 mb-6">
-        <label class="block text-xs font-bold text-amber-400 uppercase tracking-wider mb-2">Lien du Domaine Vercel (pour le QR Code)</label>
-        <div class="flex gap-2">
-          <input type="text" id="admin-url-input" value="https://fmpt-challenge.vercel.app" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-mono text-sm focus:outline-none focus:border-amber-400">
-          <button onclick="updateDomainUrl()" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm transition">
-            Mettre à jour QR
-          </button>
-        </div>
-      </div>
-
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
           <div class="text-xs text-slate-400 mb-1">Code Session</div>
           <div class="text-2xl font-black text-amber-400 font-mono">MED26</div>
         </div>
         <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
-          <div class="text-xs text-slate-400 mb-1">Participants Connectés</div>
+          <div class="text-xs text-slate-400 mb-1">Participants Connectés (Live Database)</div>
           <div id="admin-count-display" class="text-2xl font-black text-emerald-400">0</div>
         </div>
       </div>
 
-      <div class="flex flex-wrap gap-3">
-        <button onclick="addSimulatedStudents(5)" class="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl text-sm border border-slate-700">+5 Étudiants Simuler</button>
-        <button onclick="addSimulatedStudents(25)" class="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl text-sm border border-slate-700">+25 Étudiants Simuler</button>
-        <button onclick="resetApp()" class="px-4 py-3 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-semibold rounded-xl text-sm border border-rose-500/30">Réinitialiser</button>
+      <div class="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
+        <p class="text-emerald-400 text-sm font-semibold">✅ Supabase est connecté. Ouvrez le lien sur votre téléphone et rejoignez, le compteur augmentera tout seul !</p>
       </div>
     </div>
   </main>
 
   <script>
+    // ==========================================
+    // 1. CONFIGURATION SUPABASE (VOS CLÉS ICI)
+    // ==========================================
+    const SUPABASE_URL = 'https://jwfbudorqkoaoenzpdcg.supabase.co/rest/v1/'; 
+    const SUPABASE_ANON_KEY = 'sb_publishable_c5txfs7T6ICtlV2OnIWZiA_WX3E5VFP';
+
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     let participantCount = 0;
 
+    // ==========================================
+    // 2. LOGIQUE DE L'APPLICATION
+    // ==========================================
+
+    // Charger le nombre de participants au démarrage
+    async function loadInitialCount() {
+      const { count, error } = await supabase
+        .from('participants')
+        .select('*', { count: 'exact', head: true })
+        .eq('competition_code', 'MED26');
+      
+      if (!error && count !== null) {
+        participantCount = count;
+        updateCounters();
+      }
+    }
+
+    // Écouter les nouveaux étudiants qui rejoignent en DIRECT (Realtime)
+    supabase
+      .channel('public:participants')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'participants' }, payload => {
+        console.log('Nouveau participant !', payload.new);
+        participantCount++;
+        updateCounters();
+      })
+      .subscribe();
+
+    // Quand l'étudiant clique sur "Rejoindre"
+    async function joinCompetition() {
+      const name = document.getElementById('student-name').value.trim();
+      const btn = document.getElementById('join-btn');
+
+      if (!name) return alert('Veuillez entrer votre nom.');
+      
+      btn.innerText = "Connexion...";
+      btn.disabled = true;
+
+      // Envoyer le nom à la base de données
+      const { data, error } = await supabase
+        .from('participants')
+        .insert([{ nom: name, competition_code: 'MED26' }]);
+
+      if (error) {
+        alert("Erreur de connexion : " + error.message);
+        btn.innerText = "Rejoindre le Challenge";
+        btn.disabled = false;
+        return;
+      }
+
+      // Succès ! Afficher l'écran d'attente
+      document.getElementById('registered-name').innerText = name;
+      document.getElementById('mobile-form').classList.add('hidden');
+      document.getElementById('mobile-waiting').classList.remove('hidden');
+    }
+
+    // Mise à jour de l'affichage
+    function updateCounters() {
+      document.getElementById('live-count-display').innerText = participantCount;
+      document.getElementById('admin-count-display').innerText = participantCount;
+    }
+
+    // Changement d'écran
     function switchView(viewName) {
       document.getElementById('view-live').classList.add('hidden');
       document.getElementById('view-join').classList.add('hidden');
@@ -139,43 +192,9 @@
       if (viewName === 'admin') document.getElementById('btn-admin').className = "px-5 py-2 rounded-lg bg-emerald-500 text-slate-950 font-bold shadow-md transition";
     }
 
-    function joinCompetition() {
-      const name = document.getElementById('student-name').value.trim();
-      if (!name) return alert('Veuillez entrer votre nom.');
-      
-      participantCount++;
-      updateCounters();
-      
-      document.getElementById('registered-name').innerText = name;
-      document.getElementById('mobile-form').classList.add('hidden');
-      document.getElementById('mobile-waiting').classList.remove('hidden');
-    }
+    // Lancer le chargement initial
+    loadInitialCount();
 
-    function addSimulatedStudents(amount) {
-      participantCount += amount;
-      updateCounters();
-    }
-
-    function updateDomainUrl() {
-      const newUrl = document.getElementById('admin-url-input').value.trim();
-      if (newUrl) {
-        document.getElementById('live-url-display').innerText = newUrl;
-        alert('URL du QR Code mise à jour !');
-      }
-    }
-
-    function resetApp() {
-      participantCount = 0;
-      updateCounters();
-      document.getElementById('mobile-form').classList.remove('hidden');
-      document.getElementById('mobile-waiting').classList.add('hidden');
-      document.getElementById('student-name').value = '';
-    }
-
-    function updateCounters() {
-      document.getElementById('live-count-display').innerText = participantCount;
-      document.getElementById('admin-count-display').innerText = participantCount;
-    }
   </script>
 </body>
 </html>
