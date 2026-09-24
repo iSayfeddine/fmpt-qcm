@@ -119,7 +119,7 @@
       <div class="flex justify-between items-center mb-6">
         <h2 class="text-2xl font-extrabold text-white">Tableau de Contrôle Organisateur</h2>
         <div id="db-status" class="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider bg-rose-500/20 text-rose-400 border border-rose-500/30">
-          🔴 Supabase Non Connecté (Mode Local)
+          🔴 Connexion en cours...
         </div>
       </div>
 
@@ -153,7 +153,7 @@
         </div>
       </div>
 
-      <!-- CRÉATION DE QUESTIONS (NOUVEAU) -->
+      <!-- CRÉATION DE QUESTIONS -->
       <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
         <h3 class="text-sm font-bold uppercase tracking-wider text-emerald-400 mb-4">+ Ajouter une Question à la Banque</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -191,9 +191,9 @@
 
   <script>
     // ========================================================
-    // 1. CONFIGURATION
+    // 1. CONFIGURATION SUPABASE (VOS CLÉS INTÉGRÉES)
     // ========================================================
-    const SUPABASE_URL = 'https://jwfbudorqkoaoenzpdcg.supabase.co/rest/v1/'; 
+    const SUPABASE_URL = 'https://jwfbudorqkoaoenzpdcg.supabase.co'; 
     const SUPABASE_ANON_KEY = 'sb_publishable_c5txfs7T6ICtlV2OnIWZiA_WX3E5VFP';
 
     let db = null;
@@ -202,7 +202,6 @@
     let timerInterval = null;
     let questionBank = [];
 
-    // SYSTÈME DE SECOURS (Fonctionne entre les onglets sans internet)
     const localSync = new BroadcastChannel('fmpt_local_sync');
 
     // ========================================================
@@ -225,7 +224,6 @@
     };
 
     function loadQuestionBank() {
-      // Questions de base
       const defaultQuestions = [
         {
           id: "q_default_1", category: "Cardiologie", round: "ROUND 1", timer: 20,
@@ -238,10 +236,8 @@
         }
       ];
 
-      // Charger les questions créées par l'Admin (sauvegardées dans le navigateur)
       const saved = localStorage.getItem('fmpt_custom_questions');
       const customQuestions = saved ? JSON.parse(saved) : [];
-      
       questionBank = [...defaultQuestions, ...customQuestions];
       updateQuestionSelect();
     }
@@ -284,48 +280,54 @@
       loadQuestionBank();
       alert("Question ajoutée avec succès !");
       
-      // Vider les champs
       document.getElementById('new-q-text').value = '';
       document.getElementById('new-q-optA').value = ''; document.getElementById('new-q-optB').value = '';
       document.getElementById('new-q-optC').value = ''; document.getElementById('new-q-optD').value = '';
     }
 
     // ========================================================
-    // 3. SYNCHRONISATION MULTI-ÉCRANS (SUPABASE + SECOURS LOCAL)
+    // 3. SYNCHRONISATION SUPABASE ET TEMPS RÉEL
     // ========================================================
-    function setupConnection() {
-      if(SUPABASE_URL.startsWith('http')) {
-        try {
-          db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-          
-          db.channel('public:participants')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'participants' }, () => {
-              updateCountLocal();
-            }).subscribe();
+    async function setupConnection() {
+      try {
+        db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Charger le nombre initial depuis Supabase
+        const { count, error } = await db
+          .from('participants')
+          .select('*', { count: 'exact', head: true })
+          .eq('competition_code', 'MED26');
+        
+        if (!error && count !== null) {
+          updateCountUI(count);
+        }
 
-          db.channel('competition_live')
-            .on('broadcast', { event: 'EVENT_TRIGGER' }, payload => handleRemoteEvent(payload.payload))
-            .subscribe((status) => {
-              if(status === 'SUBSCRIBED') {
-                const badge = document.getElementById('db-status');
-                badge.className = "px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
-                badge.innerText = "🟢 Supabase Connecté (Multi-Appareils OK)";
-              }
-            });
-        } catch(e) { console.error(e); }
+        // Écouter les nouveaux inscrits en direct
+        db.channel('public:participants')
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'participants' }, payload => {
+            if(payload.new.competition_code === 'MED26') {
+              participantCount++;
+              updateCountUI(participantCount);
+            }
+          }).subscribe();
+
+        // Écouter les événements du quiz en direct
+        db.channel('competition_live')
+          .on('broadcast', { event: 'EVENT_TRIGGER' }, payload => handleRemoteEvent(payload.payload))
+          .subscribe((status) => {
+            if(status === 'SUBSCRIBED') {
+              const badge = document.getElementById('db-status');
+              badge.className = "px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+              badge.innerText = "🟢 Supabase Connecté (Multi-Appareils OK)";
+            }
+          });
+      } catch(e) {
+        console.error("Erreur de connexion Supabase:", e);
       }
 
-      // Écouteur du système de secours local
       localSync.onmessage = (e) => {
-        if(e.data.type === 'COUNT_UPDATE') updateCountUI(e.data.count);
         if(e.data.type === 'EVENT_TRIGGER') handleRemoteEvent(e.data.payload);
       };
-    }
-
-    function updateCountLocal() {
-      participantCount++;
-      updateCountUI(participantCount);
-      localSync.postMessage({ type: 'COUNT_UPDATE', count: participantCount }); // Prévient les autres onglets locaux
     }
 
     function updateCountUI(count) {
@@ -336,14 +338,10 @@
 
     async function emitEvent(event_name, data = null) {
       const payload = { action: event_name, data: data };
-      // Envoi via Supabase (Internet / Téléphones)
       if(db) {
         await db.channel('competition_live').send({ type: 'broadcast', event: 'EVENT_TRIGGER', payload: payload });
       }
-      // Envoi via Secours Local (Onglets du même PC)
       localSync.postMessage({ type: 'EVENT_TRIGGER', payload: payload });
-      
-      // Auto-exécution pour l'écran courant
       handleRemoteEvent(payload);
     }
 
@@ -376,11 +374,14 @@
       if (!name) return alert('Veuillez entrer votre nom.');
       
       document.getElementById('join-btn').innerText = "Connexion...";
+      
       if(db) {
-        const {error} = await db.from('participants').insert([{ nom: name, competition_code: 'MED26' }]);
-        if(error) console.error(error);
-      } else {
-        updateCountLocal(); // Simule l'insertion locale si pas internet
+        const { error } = await db.from('participants').insert([{ nom: name, competition_code: 'MED26' }]);
+        if(error) {
+          alert("Erreur d'inscription: " + error.message);
+          document.getElementById('join-btn').innerText = "Rejoindre le Challenge";
+          return;
+        }
       }
       
       document.getElementById('registered-name').innerText = name;
