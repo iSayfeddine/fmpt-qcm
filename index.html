@@ -35,9 +35,10 @@
   <!-- VIEW 1: LIVE PROJECTOR SCREEN (/live) -->
   <main id="view-live" class="my-8 flex-1 flex flex-col justify-center items-center">
     
+    <!-- LOBBY -->
     <div id="live-lobby" class="glass-panel gold-glow rounded-3xl p-8 md:p-12 w-full max-w-4xl text-center border border-amber-500/30">
-      <div class="text-xs font-bold uppercase tracking-widest text-amber-400 mb-2">Grand Amphithéâtre FMPT</div>
-      <h1 class="text-3xl md:text-5xl font-black text-white mb-6">MEDICAL CHALLENGE 2026</h1>
+      <div id="live-location-text" class="text-xs font-bold uppercase tracking-widest text-amber-400 mb-2">Grand Amphithéâtre FMPT</div>
+      <h1 id="live-title-text" class="text-3xl md:text-5xl font-black text-white mb-6">MEDICAL CHALLENGE 2026</h1>
       
       <div class="flex flex-col items-center my-6">
         <div class="bg-white p-6 rounded-2xl shadow-2xl mb-4 border-4 border-amber-400 min-h-[200px] min-w-[200px] flex items-center justify-center">
@@ -54,6 +55,7 @@
       </div>
     </div>
 
+    <!-- ÉCRAN QUESTION -->
     <div id="live-question-screen" class="hidden glass-panel rounded-3xl p-8 md:p-12 w-full max-w-5xl border border-slate-700">
       <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-800">
         <div>
@@ -74,6 +76,7 @@
       </div>
     </div>
 
+    <!-- ÉCRAN CLASSEMENT -->
     <div id="live-leaderboard-screen" class="hidden glass-panel gold-glow rounded-3xl p-8 md:p-12 w-full max-w-4xl text-center border border-amber-500/30">
       <h2 class="text-4xl font-black text-amber-400 mb-8 uppercase tracking-widest">🏆 Classement en Direct</h2>
       <div id="leaderboard-list" class="flex flex-col gap-3"></div>
@@ -84,7 +87,7 @@
   <main id="view-join" class="my-8 flex-1 flex justify-center items-center hidden">
     <div class="glass-panel rounded-3xl p-6 w-full max-w-md border border-slate-800 text-center">
       <div class="font-arabic text-3xl font-bold text-amber-400 mb-1">التواصل الصحي</div>
-      <div class="text-xs text-slate-400 mb-6 font-semibold uppercase tracking-wider">Medical Challenge — FMPT</div>
+      <div class="text-xs text-slate-400 mb-6 font-semibold uppercase tracking-wider">Interface Participant</div>
 
       <div id="mobile-form">
         <div class="text-left mb-4">
@@ -139,6 +142,18 @@
         </div>
       </div>
 
+      <!-- PARAMÈTRES DE L'ÉVÉNEMENT (NOUVEAU) -->
+      <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 mb-6">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-amber-400 mb-4">⚙️ Paramètres de l'Événement</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <input type="text" id="admin-event-location" placeholder="Lieu de l'événement" class="bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-400">
+          <input type="text" id="admin-event-title" placeholder="Titre de la compétition" class="bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-400">
+        </div>
+        <button onclick="updateEventSettings()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-bold rounded-xl text-sm uppercase tracking-wider transition">
+          Mettre à jour l'affichage
+        </button>
+      </div>
+
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex justify-between items-center">
           <div>
@@ -156,14 +171,19 @@
               🏆 Afficher Classement
             </button>
             <button onclick="hardResetDatabase()" class="px-4 py-2 bg-rose-500 hover:bg-rose-400 text-slate-950 font-bold rounded-lg text-xs uppercase tracking-wider transition">
-              🗑️ Vider la base
+              🗑️ Vider Joueurs
             </button>
           </div>
         </div>
       </div>
 
       <div class="bg-slate-900/90 p-6 rounded-2xl border border-slate-800 mb-6">
-        <h3 class="text-sm font-bold uppercase tracking-wider text-amber-400 mb-4">Lancement en Direct</h3>
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-sm font-bold uppercase tracking-wider text-amber-400">Lancement en Direct</h3>
+          <button onclick="clearQuestionBank()" class="text-xs px-3 py-1.5 bg-rose-500/20 text-rose-400 font-bold rounded hover:bg-rose-500/40 border border-rose-500/30 transition">
+            🗑️ Vider la banque de questions
+          </button>
+        </div>
         <div class="mb-4">
           <select id="admin-q-select" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white font-medium focus:outline-none focus:border-amber-400"></select>
         </div>
@@ -234,35 +254,69 @@
         new QRCode(document.getElementById("real-qrcode"), { text: joinUrl, width: 180, height: 180, colorDark : "#060B19", colorLight : "#ffffff" });
       }
 
-      const urlParams = new URLSearchParams(window.location.search);
-      switchView(urlParams.get('view') || 'live');
-
+      loadSettings();
       loadQuestionBank();
       setupConnection();
+      
+      const urlParams = new URLSearchParams(window.location.search);
+      switchView(urlParams.get('view') || 'live');
     };
 
-    function loadQuestionBank() {
-      const defaultQuestions = [
-        {
-          id: "q_default_1", category: "Cardiologie", round: "ROUND 1", timer: 20, points: 10,
-          text: "Quel signe ECG est le plus spécifique d'un SCA ST+ ?",
-          options: [
-            { letter: "A", text: "Onde T négative symétrique" }, { letter: "B", text: "Sus-décalage ST avec miroir" },
-            { letter: "C", text: "Sous-décalage de ST diffus" }, { letter: "D", text: "Bloc de branche droit" }
-          ],
-          correct: "B", explanation: "Le sus-décalage avec image en miroir signe l'occlusion coronaire aiguë totale."
-        }
-      ];
+    // ==========================================
+    // PARAMÈTRES (TEXTES & TITRES)
+    // ==========================================
+    function loadSettings() {
+      const loc = localStorage.getItem('fmpt_location') || "Grand Amphithéâtre FMPT";
+      const title = localStorage.getItem('fmpt_title') || "MEDICAL CHALLENGE 2026";
+      
+      document.getElementById('live-location-text').innerText = loc;
+      document.getElementById('live-title-text').innerText = title;
+      
+      document.getElementById('admin-event-location').value = loc;
+      document.getElementById('admin-event-title').value = title;
+    }
 
-      const saved = localStorage.getItem('fmpt_custom_questions');
-      const customQuestions = saved ? JSON.parse(saved) : [];
-      questionBank = [...defaultQuestions, ...customQuestions];
+    function updateEventSettings() {
+      const loc = document.getElementById('admin-event-location').value;
+      const title = document.getElementById('admin-event-title').value;
+      
+      localStorage.setItem('fmpt_location', loc);
+      localStorage.setItem('fmpt_title', title);
+      
+      emitEvent('UPDATE_SETTINGS', { location: loc, title: title });
+      alert('Paramètres de l\'événement mis à jour !');
+    }
+
+    // ==========================================
+    // BANQUE DE QUESTIONS
+    // ==========================================
+    function loadQuestionBank() {
+      const defaultQuestions = [{
+        id: "q_default_1", category: "Cardiologie", round: "ROUND 1", timer: 20, points: 10,
+        text: "Quel signe ECG est le plus spécifique d'un SCA ST+ ?",
+        options: [
+          { letter: "A", text: "Onde T négative symétrique" }, { letter: "B", text: "Sus-décalage ST avec miroir" },
+          { letter: "C", text: "Sous-décalage de ST diffus" }, { letter: "D", text: "Bloc de branche droit" }
+        ],
+        correct: "B", explanation: "Le sus-décalage avec image en miroir signe l'occlusion coronaire aiguë totale."
+      }];
+
+      const saved = localStorage.getItem('fmpt_bank');
+      if (saved) {
+        questionBank = JSON.parse(saved);
+      } else {
+        questionBank = [...defaultQuestions];
+      }
       updateQuestionSelect();
     }
 
     function updateQuestionSelect() {
       const qSelect = document.getElementById('admin-q-select');
       qSelect.innerHTML = '';
+      if(questionBank.length === 0) {
+        qSelect.innerHTML = '<option disabled selected>La banque est vide</option>';
+        return;
+      }
       questionBank.forEach(q => {
         const opt = document.createElement('option');
         opt.value = q.id;
@@ -273,7 +327,7 @@
 
     function saveNewQuestion() {
       const newQ = {
-        id: 'q_custom_' + Date.now(),
+        id: 'q_' + Date.now(),
         category: document.getElementById('new-q-cat').value || 'Général',
         round: document.getElementById('new-q-round').value || 'ROUND X',
         timer: parseInt(document.getElementById('new-q-timer').value) || 20,
@@ -291,14 +345,28 @@
 
       if (!newQ.text || !newQ.options[0].text) return alert("Veuillez remplir l'énoncé.");
 
-      const saved = localStorage.getItem('fmpt_custom_questions');
-      const customQuestions = saved ? JSON.parse(saved) : [];
-      customQuestions.push(newQ);
-      localStorage.setItem('fmpt_custom_questions', JSON.stringify(customQuestions));
-      loadQuestionBank();
+      questionBank.push(newQ);
+      localStorage.setItem('fmpt_bank', JSON.stringify(questionBank));
+      updateQuestionSelect();
       alert("Question ajoutée avec succès !");
+      
+      // Nettoyage visuel
+      document.getElementById('new-q-text').value = '';
+      document.getElementById('new-q-optA').value = ''; document.getElementById('new-q-optB').value = '';
+      document.getElementById('new-q-optC').value = ''; document.getElementById('new-q-optD').value = '';
     }
 
+    function clearQuestionBank() {
+      if(confirm("⚠️ Voulez-vous vraiment vider la banque ? Toutes les questions seront effacées !")) {
+        questionBank = [];
+        localStorage.setItem('fmpt_bank', JSON.stringify(questionBank));
+        updateQuestionSelect();
+      }
+    }
+
+    // ==========================================
+    // CONNEXION SUPABASE ET ÉVÉNEMENTS
+    // ==========================================
     async function setupConnection() {
       try {
         db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -342,26 +410,30 @@
       if(payload.action === 'REVEAL_ANSWER') executeReveal(payload.data);
       if(payload.action === 'RESET_LOBBY') executeReset();
       if(payload.action === 'SHOW_LEADERBOARD') executeLeaderboard();
-      // Si l'admin vide la base, on redémarre l'appli de tous les joueurs connectés !
+      if(payload.action === 'UPDATE_SETTINGS') {
+        document.getElementById('live-location-text').innerText = payload.data.location;
+        document.getElementById('live-title-text').innerText = payload.data.title;
+      }
       if(payload.action === 'HARD_RESET') window.location.reload(); 
     }
 
     // BOUTONS ADMIN
     function startQuestion() {
+      if(questionBank.length === 0) return alert("Banque vide !");
       const q = questionBank.find(item => item.id === document.getElementById('admin-q-select').value);
       if(q) emitEvent('QUESTION_START', q);
     }
     function lockAnswers() { emitEvent('LOCK_ANSWERS'); }
     function revealAnswer() {
+      if(questionBank.length === 0) return;
       const q = questionBank.find(item => item.id === document.getElementById('admin-q-select').value);
       if(q) emitEvent('REVEAL_ANSWER', { correct: q.correct, explanation: q.explanation, points: q.points });
     }
     function resetLobby() { emitEvent('RESET_LOBBY'); }
     function showLeaderboard() { emitEvent('SHOW_LEADERBOARD'); }
 
-    // FONCTION POUR VIDER LA BASE (NETTOYAGE DES TESTS)
     async function hardResetDatabase() {
-      if(!confirm("ATTENTION : Cela va supprimer TOUS les participants et remettre les compteurs à zéro. Continuer ?")) return;
+      if(!confirm("ATTENTION : Cela va supprimer TOUS les participants et leurs scores de la base de données. Continuer ?")) return;
       if(db) {
         await db.from('participants').delete().eq('competition_code', 'MED26');
         emitEvent('HARD_RESET');
@@ -375,20 +447,14 @@
       document.getElementById('join-btn').innerText = "Vérification...";
       
       if(db) {
-        // VERIFICATION : Le nom existe-t-il déjà ?
-        const { data: existing } = await db.from('participants')
-          .select('id').eq('competition_code', 'MED26').ilike('nom', name);
-          
+        const { data: existing } = await db.from('participants').select('id').eq('competition_code', 'MED26').ilike('nom', name);
         if(existing && existing.length > 0) {
           alert("Ce nom est déjà utilisé ! Veuillez ajouter votre initiale ou un pseudo unique.");
           document.getElementById('join-btn').innerText = "Rejoindre le Challenge";
           return;
         }
 
-        const { data, error } = await db.from('participants')
-          .insert([{ nom: name, competition_code: 'MED26', score: 0 }])
-          .select().single();
-          
+        const { data, error } = await db.from('participants').insert([{ nom: name, competition_code: 'MED26', score: 0 }]).select().single();
         if(error) { alert("Erreur: " + error.message); return; }
         myParticipantId = data.id;
         myScore = 0;
@@ -458,7 +524,6 @@
     }
 
     async function executeReveal(payload) {
-      // ARRÊT DU CHRONO AU CLIC "RÉVÉLER"
       clearInterval(timerInterval);
       document.getElementById('live-timer').innerText = "00";
       
