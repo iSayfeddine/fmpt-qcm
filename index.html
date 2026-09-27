@@ -18,24 +18,17 @@
 
 <body class="min-h-screen flex flex-col justify-between p-4 md:p-8">
 
-  <!-- TOP BAR -->
-  <header class="flex flex-col md:flex-row items-center justify-between gap-4 pb-6 border-b border-slate-800">
+  <!-- TOP BAR (Boutons masqués, uniquement le branding pour les étudiants) -->
+  <header class="flex flex-col md:flex-row items-center justify-center md:justify-between gap-4 pb-6 border-b border-slate-800 text-center md:text-left">
     <div>
       <div class="font-arabic text-3xl font-extrabold text-amber-400 tracking-wide">التواصل الصحي</div>
       <div class="text-xs uppercase tracking-widest text-slate-400 font-semibold">Faculté de Médecine et de Pharmacie de Tanger</div>
     </div>
-    
-    <div class="flex bg-slate-900 p-1.5 rounded-xl border border-slate-800 text-sm font-semibold z-50">
-      <button id="btn-live" onclick="switchView('live')" class="px-5 py-2 rounded-lg bg-amber-500 text-slate-950 font-bold transition">Écran Projecteur</button>
-      <button id="btn-join" onclick="switchView('join')" class="px-5 py-2 rounded-lg text-slate-400 hover:text-white transition">Mobile Étudiant</button>
-      <button id="btn-admin" onclick="switchView('admin')" class="px-5 py-2 rounded-lg text-slate-400 hover:text-white transition">Admin Dashboard</button>
-    </div>
   </header>
 
-  <!-- VIEW 1: LIVE PROJECTOR SCREEN (/live) -->
-  <main id="view-live" class="my-8 flex-1 flex flex-col justify-center items-center">
+  <!-- VIEW 1: LIVE PROJECTOR SCREEN (?view=live) -->
+  <main id="view-live" class="my-8 flex-1 flex flex-col justify-center items-center hidden">
     
-    <!-- LOBBY -->
     <div id="live-lobby" class="glass-panel gold-glow rounded-3xl p-8 md:p-12 w-full max-w-4xl text-center border border-amber-500/30">
       <div id="live-location-text" class="text-xs font-bold uppercase tracking-widest text-amber-400 mb-2">Grand Amphithéâtre FMPT</div>
       <h1 id="live-title-text" class="text-3xl md:text-5xl font-black text-white mb-6">MEDICAL CHALLENGE 2026</h1>
@@ -55,7 +48,6 @@
       </div>
     </div>
 
-    <!-- ÉCRAN QUESTION -->
     <div id="live-question-screen" class="hidden glass-panel rounded-3xl p-8 md:p-12 w-full max-w-5xl border border-slate-700">
       <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-800">
         <div>
@@ -76,14 +68,13 @@
       </div>
     </div>
 
-    <!-- ÉCRAN CLASSEMENT -->
     <div id="live-leaderboard-screen" class="hidden glass-panel gold-glow rounded-3xl p-8 md:p-12 w-full max-w-4xl text-center border border-amber-500/30">
       <h2 class="text-4xl font-black text-amber-400 mb-8 uppercase tracking-widest">🏆 Classement en Direct</h2>
       <div id="leaderboard-list" class="flex flex-col gap-3"></div>
     </div>
   </main>
 
-  <!-- VIEW 2: PARTICIPANT MOBILE (/join) -->
+  <!-- VIEW 2: PARTICIPANT MOBILE (/ ou ?view=join) -->
   <main id="view-join" class="my-8 flex-1 flex justify-center items-center hidden">
     <div class="glass-panel rounded-3xl p-6 w-full max-w-md border border-slate-800 text-center">
       <div class="font-arabic text-3xl font-bold text-amber-400 mb-1">التواصل الصحي</div>
@@ -131,7 +122,7 @@
     </div>
   </main>
 
-  <!-- VIEW 3: ADMIN DASHBOARD (/admin) -->
+  <!-- VIEW 3: ADMIN DASHBOARD (?view=admin) -->
   <main id="view-admin" class="my-8 flex-1 flex justify-center items-center hidden">
     <div class="glass-panel rounded-3xl p-8 w-full max-w-5xl border border-slate-800">
       
@@ -142,7 +133,6 @@
         </div>
       </div>
 
-      <!-- PARAMÈTRES DE L'ÉVÉNEMENT (NOUVEAU) -->
       <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 mb-6">
         <h3 class="text-sm font-bold uppercase tracking-wider text-amber-400 mb-4">⚙️ Paramètres de l'Événement</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -248,7 +238,22 @@
     const localSync = new BroadcastChannel('fmpt_local_sync');
 
     window.onload = function() {
-      const joinUrl = window.location.origin + "?view=join";
+      // Routage sécurisé basé sur l'URL
+      const urlParams = new URLSearchParams(window.location.search);
+      let targetView = urlParams.get('view') || 'join'; // Par défaut, c'est l'étudiant !
+      
+      // Sécurité par mot de passe pour l'Admin
+      if (targetView === 'admin') {
+        const password = prompt("Authentification requise. Entrez le mot de passe organisateur :");
+        if (password !== "FMPT2026") {
+          alert("Mot de passe incorrect.");
+          window.location.href = window.location.origin; // Retour à l'accueil
+          return;
+        }
+      }
+
+      // Configuration du QR Code (qui pointe toujours vers l'accueil étudiant)
+      const joinUrl = window.location.origin;
       document.getElementById('live-url-display').innerText = joinUrl;
       if(document.getElementById("real-qrcode")) {
         new QRCode(document.getElementById("real-qrcode"), { text: joinUrl, width: 180, height: 180, colorDark : "#060B19", colorLight : "#ffffff" });
@@ -257,10 +262,15 @@
       loadSettings();
       loadQuestionBank();
       setupConnection();
-      
-      const urlParams = new URLSearchParams(window.location.search);
-      switchView(urlParams.get('view') || 'live');
+      switchView(targetView);
     };
+
+    function switchView(viewName) {
+      document.getElementById('view-live').classList.add('hidden');
+      document.getElementById('view-join').classList.add('hidden');
+      document.getElementById('view-admin').classList.add('hidden');
+      document.getElementById('view-' + viewName).classList.remove('hidden');
+    }
 
     // ==========================================
     // PARAMÈTRES (TEXTES & TITRES)
@@ -350,7 +360,6 @@
       updateQuestionSelect();
       alert("Question ajoutée avec succès !");
       
-      // Nettoyage visuel
       document.getElementById('new-q-text').value = '';
       document.getElementById('new-q-optA').value = ''; document.getElementById('new-q-optB').value = '';
       document.getElementById('new-q-optC').value = ''; document.getElementById('new-q-optD').value = '';
@@ -621,19 +630,6 @@
           executeLock();
         }
       }, 1000);
-    }
-
-    function switchView(viewName) {
-      document.getElementById('view-live').classList.add('hidden');
-      document.getElementById('view-join').classList.add('hidden');
-      document.getElementById('view-admin').classList.add('hidden');
-      document.getElementById('btn-live').className = "px-5 py-2 rounded-lg text-slate-400 hover:text-white transition";
-      document.getElementById('btn-join').className = "px-5 py-2 rounded-lg text-slate-400 hover:text-white transition";
-      document.getElementById('btn-admin').className = "px-5 py-2 rounded-lg text-slate-400 hover:text-white transition";
-      document.getElementById('view-' + viewName).classList.remove('hidden');
-      if (viewName === 'live') document.getElementById('btn-live').className = "px-5 py-2 rounded-lg bg-amber-500 text-slate-950 font-bold shadow-md transition";
-      if (viewName === 'join') document.getElementById('btn-join').className = "px-5 py-2 rounded-lg bg-cyan-500 text-slate-950 font-bold shadow-md transition";
-      if (viewName === 'admin') document.getElementById('btn-admin').className = "px-5 py-2 rounded-lg bg-emerald-500 text-slate-950 font-bold shadow-md transition";
     }
   </script>
 </body>
