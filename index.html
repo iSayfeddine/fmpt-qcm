@@ -13,31 +13,35 @@
     .font-arabic { font-family: 'Cairo', sans-serif; }
     .glass-panel { background: rgba(11, 21, 44, 0.85); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); }
     .gold-glow { box-shadow: 0 0 35px rgba(245, 158, 11, 0.2); }
+    .blue-glow { box-shadow: 0 0 35px rgba(56, 189, 248, 0.2); }
   </style>
 </head>
 
 <body class="min-h-screen flex flex-col justify-between p-4 md:p-8">
 
-  <!-- TOP BAR (Boutons masqués, uniquement le branding pour les étudiants) -->
+  <!-- TOP BAR AVEC LE LOGO -->
   <header class="flex flex-col md:flex-row items-center justify-center md:justify-between gap-4 pb-6 border-b border-slate-800 text-center md:text-left">
-    <div>
-      <div class="font-arabic text-3xl font-extrabold text-amber-400 tracking-wide">التواصل الصحي</div>
-      <div class="text-xs uppercase tracking-widest text-slate-400 font-semibold">Faculté de Médecine et de Pharmacie de Tanger</div>
+    <div class="flex items-center gap-4">
+      <img src="logo.png" alt="Logo" class="h-14 md:h-16 object-contain drop-shadow-[0_0_10px_rgba(56,189,248,0.5)]">
+      <div>
+        <div class="font-arabic text-3xl font-extrabold text-sky-400 tracking-wide">التواصل الصحي</div>
+        <div class="text-xs uppercase tracking-widest text-slate-400 font-semibold">Faculté de Médecine et de Pharmacie de Tanger</div>
+      </div>
     </div>
   </header>
 
   <!-- VIEW 1: LIVE PROJECTOR SCREEN (?view=live) -->
   <main id="view-live" class="my-8 flex-1 flex flex-col justify-center items-center hidden">
     
-    <div id="live-lobby" class="glass-panel gold-glow rounded-3xl p-8 md:p-12 w-full max-w-4xl text-center border border-amber-500/30">
-      <div id="live-location-text" class="text-xs font-bold uppercase tracking-widest text-amber-400 mb-2">Grand Amphithéâtre FMPT</div>
+    <div id="live-lobby" class="glass-panel blue-glow rounded-3xl p-8 md:p-12 w-full max-w-4xl text-center border border-sky-500/30">
+      <div id="live-location-text" class="text-xs font-bold uppercase tracking-widest text-sky-400 mb-2">Grand Amphithéâtre FMPT</div>
       <h1 id="live-title-text" class="text-3xl md:text-5xl font-black text-white mb-6">MEDICAL CHALLENGE 2026</h1>
       
       <div class="flex flex-col items-center my-6">
-        <div class="bg-white p-6 rounded-2xl shadow-2xl mb-4 border-4 border-amber-400 min-h-[200px] min-w-[200px] flex items-center justify-center">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl mb-4 border-4 border-sky-400 min-h-[200px] min-w-[200px] flex items-center justify-center">
           <div id="real-qrcode"></div>
         </div>
-        <div class="text-xl font-black text-amber-400 tracking-wider mb-1">SCANNEZ POUR REJOINDRE</div>
+        <div class="text-xl font-black text-sky-400 tracking-wider mb-1">SCANNEZ POUR REJOINDRE</div>
         <div id="live-url-display" class="text-sm font-semibold text-slate-300 bg-slate-900/80 px-4 py-1.5 rounded-lg border border-slate-800 mb-6 font-mono"></div>
         
         <div class="bg-slate-900/90 px-8 py-4 rounded-2xl border border-slate-800 flex items-center gap-4 mt-6">
@@ -51,13 +55,13 @@
     <div id="live-question-screen" class="hidden glass-panel rounded-3xl p-8 md:p-12 w-full max-w-5xl border border-slate-700">
       <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-800">
         <div>
-          <span id="live-round-tag" class="text-xs font-black uppercase tracking-widest bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full border border-amber-500/30"></span>
+          <span id="live-round-tag" class="text-xs font-black uppercase tracking-widest bg-sky-500/10 text-sky-400 px-3 py-1 rounded-full border border-sky-500/30"></span>
           <span id="live-category-tag" class="ml-2 text-xs font-bold uppercase tracking-wider text-slate-400"></span>
           <span id="live-points-tag" class="ml-2 text-xs font-bold uppercase tracking-wider text-emerald-400"></span>
         </div>
         <div class="flex items-center gap-3 bg-slate-900 px-5 py-2 rounded-2xl border border-slate-800">
           <span class="text-xs font-bold text-slate-400 uppercase">Temps :</span>
-          <span id="live-timer" class="text-3xl font-black text-amber-400 font-mono"></span>
+          <span id="live-timer" class="text-3xl font-black text-sky-400 font-mono"></span>
         </div>
       </div>
       <h2 id="live-question-text" class="text-2xl md:text-3xl font-bold text-white mb-8 leading-relaxed">Chargement...</h2>
@@ -68,8 +72,8 @@
       </div>
     </div>
 
-    <div id="live-leaderboard-screen" class="hidden glass-panel gold-glow rounded-3xl p-8 md:p-12 w-full max-w-4xl text-center border border-amber-500/30">
-      <h2 class="text-4xl font-black text-amber-400 mb-8 uppercase tracking-widest">🏆 Classement en Direct</h2>
+    <div id="live-leaderboard-screen" class="hidden glass-panel blue-glow rounded-3xl p-8 md:p-12 w-full max-w-4xl text-center border border-sky-500/30">
+      <h2 class="text-4xl font-black text-sky-400 mb-8 uppercase tracking-widest">🏆 Classement en Direct</h2>
       <div id="leaderboard-list" class="flex flex-col gap-3"></div>
     </div>
   </main>
@@ -77,15 +81,18 @@
   <!-- VIEW 2: PARTICIPANT MOBILE (/ ou ?view=join) -->
   <main id="view-join" class="my-8 flex-1 flex justify-center items-center hidden">
     <div class="glass-panel rounded-3xl p-6 w-full max-w-md border border-slate-800 text-center">
-      <div class="font-arabic text-3xl font-bold text-amber-400 mb-1">التواصل الصحي</div>
+      
+      <!-- LOGO SUR MOBILE -->
+      <img src="logo.png" alt="Logo" class="h-20 mx-auto mb-4 object-contain drop-shadow-[0_0_15px_rgba(56,189,248,0.4)]">
+      <div class="font-arabic text-3xl font-bold text-sky-400 mb-1">التواصل الصحي</div>
       <div class="text-xs text-slate-400 mb-6 font-semibold uppercase tracking-wider">Interface Participant</div>
 
       <div id="mobile-form">
         <div class="text-left mb-4">
           <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Nom & Prénom *</label>
-          <input type="text" id="student-name" placeholder="Ex: Dr. Sarah Amrani" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3.5 text-white focus:outline-none focus:border-amber-400 font-medium">
+          <input type="text" id="student-name" placeholder="Ex: Dr. Sarah Amrani" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3.5 text-white focus:outline-none focus:border-sky-400 font-medium">
         </div>
-        <button id="join-btn" onclick="joinCompetition()" class="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-lg shadow-lg transition">
+        <button id="join-btn" onclick="joinCompetition()" class="w-full py-4 bg-sky-500 hover:bg-sky-400 text-slate-950 font-black rounded-xl text-lg shadow-lg transition">
           Rejoindre le Challenge
         </button>
       </div>
@@ -93,15 +100,15 @@
       <div id="mobile-waiting" class="hidden py-8">
         <div class="w-16 h-16 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-500/30 font-bold text-2xl">✓</div>
         <h2 class="text-2xl font-bold text-white mb-1">VOUS ÊTES INSCRIT !</h2>
-        <p id="registered-name" class="text-amber-400 font-bold text-lg mb-2"></p>
+        <p id="registered-name" class="text-sky-400 font-bold text-lg mb-2"></p>
         <p class="text-emerald-400 font-bold text-sm mb-6">Score : <span id="mobile-current-score">0</span> pts</p>
         <div class="text-sm text-slate-400 animate-pulse font-medium">En attente du système...</div>
       </div>
 
       <div id="mobile-question-screen" class="hidden text-left">
         <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-800">
-          <span class="text-xs font-bold text-amber-400 uppercase">Question Active</span>
-          <span id="mobile-timer" class="text-lg font-black text-amber-400 font-mono"></span>
+          <span class="text-xs font-bold text-sky-400 uppercase">Question Active</span>
+          <span id="mobile-timer" class="text-lg font-black text-sky-400 font-mono"></span>
         </div>
         <h3 id="mobile-q-text" class="text-base font-bold text-white mb-6 leading-snug"></h3>
         <div id="mobile-options-container" class="space-y-3 mb-6"></div>
@@ -134,10 +141,10 @@
       </div>
 
       <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 mb-6">
-        <h3 class="text-sm font-bold uppercase tracking-wider text-amber-400 mb-4">⚙️ Paramètres de l'Événement</h3>
+        <h3 class="text-sm font-bold uppercase tracking-wider text-sky-400 mb-4">⚙️ Paramètres de l'Événement</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <input type="text" id="admin-event-location" placeholder="Lieu de l'événement" class="bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-400">
-          <input type="text" id="admin-event-title" placeholder="Titre de la compétition" class="bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-400">
+          <input type="text" id="admin-event-location" placeholder="Lieu de l'événement" class="bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-sky-400">
+          <input type="text" id="admin-event-title" placeholder="Titre de la compétition" class="bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-sky-400">
         </div>
         <button onclick="updateEventSettings()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-bold rounded-xl text-sm uppercase tracking-wider transition">
           Mettre à jour l'affichage
@@ -148,7 +155,7 @@
         <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex justify-between items-center">
           <div>
             <div class="text-xs text-slate-400 mb-1">Code Session</div>
-            <div class="text-2xl font-black text-amber-400 font-mono">MED26</div>
+            <div class="text-2xl font-black text-sky-400 font-mono">MED26</div>
           </div>
         </div>
         <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex justify-between items-center">
@@ -157,7 +164,7 @@
             <div id="admin-count-display" class="text-2xl font-black text-emerald-400">0</div>
           </div>
           <div class="flex flex-col gap-2">
-            <button onclick="showLeaderboard()" class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg text-xs uppercase tracking-wider transition">
+            <button onclick="showLeaderboard()" class="px-4 py-2 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded-lg text-xs uppercase tracking-wider transition">
               🏆 Afficher Classement
             </button>
             <button onclick="hardResetDatabase()" class="px-4 py-2 bg-rose-500 hover:bg-rose-400 text-slate-950 font-bold rounded-lg text-xs uppercase tracking-wider transition">
@@ -169,13 +176,13 @@
 
       <div class="bg-slate-900/90 p-6 rounded-2xl border border-slate-800 mb-6">
         <div class="flex justify-between items-center mb-4">
-          <h3 class="text-sm font-bold uppercase tracking-wider text-amber-400">Lancement en Direct</h3>
+          <h3 class="text-sm font-bold uppercase tracking-wider text-sky-400">Lancement en Direct</h3>
           <button onclick="clearQuestionBank()" class="text-xs px-3 py-1.5 bg-rose-500/20 text-rose-400 font-bold rounded hover:bg-rose-500/40 border border-rose-500/30 transition">
             🗑️ Vider la banque de questions
           </button>
         </div>
         <div class="mb-4">
-          <select id="admin-q-select" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white font-medium focus:outline-none focus:border-amber-400"></select>
+          <select id="admin-q-select" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white font-medium focus:outline-none focus:border-sky-400"></select>
         </div>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
           <button onclick="startQuestion()" class="py-3 px-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition">▶ Lancer QCM</button>
@@ -238,21 +245,18 @@
     const localSync = new BroadcastChannel('fmpt_local_sync');
 
     window.onload = function() {
-      // Routage sécurisé basé sur l'URL
       const urlParams = new URLSearchParams(window.location.search);
-      let targetView = urlParams.get('view') || 'join'; // Par défaut, c'est l'étudiant !
+      let targetView = urlParams.get('view') || 'join'; 
       
-      // Sécurité par mot de passe pour l'Admin
       if (targetView === 'admin') {
         const password = prompt("Authentification requise. Entrez le mot de passe organisateur :");
         if (password !== "FMPT2026") {
           alert("Mot de passe incorrect.");
-          window.location.href = window.location.origin; // Retour à l'accueil
+          window.location.href = window.location.origin; 
           return;
         }
       }
 
-      // Configuration du QR Code (qui pointe toujours vers l'accueil étudiant)
       const joinUrl = window.location.origin;
       document.getElementById('live-url-display').innerText = joinUrl;
       if(document.getElementById("real-qrcode")) {
@@ -272,9 +276,6 @@
       document.getElementById('view-' + viewName).classList.remove('hidden');
     }
 
-    // ==========================================
-    // PARAMÈTRES (TEXTES & TITRES)
-    // ==========================================
     function loadSettings() {
       const loc = localStorage.getItem('fmpt_location') || "Grand Amphithéâtre FMPT";
       const title = localStorage.getItem('fmpt_title') || "MEDICAL CHALLENGE 2026";
@@ -297,9 +298,6 @@
       alert('Paramètres de l\'événement mis à jour !');
     }
 
-    // ==========================================
-    // BANQUE DE QUESTIONS
-    // ==========================================
     function loadQuestionBank() {
       const defaultQuestions = [{
         id: "q_default_1", category: "Cardiologie", round: "ROUND 1", timer: 20, points: 10,
@@ -373,9 +371,6 @@
       }
     }
 
-    // ==========================================
-    // CONNEXION SUPABASE ET ÉVÉNEMENTS
-    // ==========================================
     async function setupConnection() {
       try {
         db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -426,7 +421,6 @@
       if(payload.action === 'HARD_RESET') window.location.reload(); 
     }
 
-    // BOUTONS ADMIN
     function startQuestion() {
       if(questionBank.length === 0) return alert("Banque vide !");
       const q = questionBank.find(item => item.id === document.getElementById('admin-q-select').value);
@@ -491,7 +485,7 @@
       const grid = document.getElementById('live-options-grid');
       grid.innerHTML = '';
       q.options.forEach(opt => {
-        grid.innerHTML += `<div id="opt-box-${opt.letter}" class="p-5 bg-slate-900 border border-slate-800 rounded-2xl flex items-center gap-4 transition"><span class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold border border-amber-500/30">${opt.letter}</span><span class="text-white font-semibold text-lg">${opt.text}</span></div>`;
+        grid.innerHTML += `<div id="opt-box-${opt.letter}" class="p-5 bg-slate-900 border border-slate-800 rounded-2xl flex items-center gap-4 transition"><span class="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center font-bold border border-sky-500/30">${opt.letter}</span><span class="text-white font-semibold text-lg">${opt.text}</span></div>`;
       });
 
       document.getElementById('mobile-waiting').classList.add('hidden');
@@ -503,7 +497,7 @@
       const mContainer = document.getElementById('mobile-options-container');
       mContainer.innerHTML = '';
       q.options.forEach(opt => {
-        mContainer.innerHTML += `<button id="m-btn-${opt.letter}" onclick="submitAnswer('${opt.letter}')" class="w-full p-4 bg-slate-900 border border-slate-700 hover:border-amber-400 rounded-2xl text-left text-white font-bold flex items-center gap-3 transition"><span class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm">${opt.letter}</span><span>${opt.text}</span></button>`;
+        mContainer.innerHTML += `<button id="m-btn-${opt.letter}" onclick="submitAnswer('${opt.letter}')" class="w-full p-4 bg-slate-900 border border-slate-700 hover:border-sky-400 rounded-2xl text-left text-white font-bold flex items-center gap-3 transition"><span class="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center text-sm">${opt.letter}</span><span>${opt.text}</span></button>`;
       });
       startTimer(q.timer);
     }
@@ -516,7 +510,7 @@
       });
       const selected = document.getElementById(`m-btn-${letter}`);
       selected.classList.remove('opacity-50');
-      selected.classList.add('border-amber-400', 'bg-amber-500/20');
+      selected.classList.add('border-sky-400', 'bg-sky-500/20');
       document.getElementById('mobile-answer-status').classList.remove('hidden');
     }
 
@@ -590,7 +584,7 @@
           const list = document.getElementById('leaderboard-list');
           list.innerHTML = '';
           data.forEach((p, index) => {
-            const isTop = index === 0 ? "bg-amber-500 text-slate-950 font-black gold-glow scale-105" : "bg-slate-900 text-white font-bold border border-slate-700";
+            const isTop = index === 0 ? "bg-sky-500 text-slate-950 font-black blue-glow scale-105" : "bg-slate-900 text-white font-bold border border-slate-700";
             list.innerHTML += `
               <div class="flex justify-between items-center p-5 rounded-2xl ${isTop} transition">
                 <div class="flex items-center gap-4">
