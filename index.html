@@ -180,9 +180,15 @@
             🗑️ Vider la banque (Cloud)
           </button>
         </div>
-        <div class="mb-4">
-          <select id="admin-q-select" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white font-medium focus:outline-none focus:border-sky-400"></select>
+        
+        <!-- SÉLECTION ET BOUTON DE MODIFICATION -->
+        <div class="flex gap-3 mb-4">
+          <select id="admin-q-select" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white font-medium focus:outline-none focus:border-sky-400"></select>
+          <button onclick="loadQuestionForEditing()" class="px-5 py-3 bg-sky-500/20 hover:bg-sky-500/30 border border-sky-500/50 text-sky-400 font-bold rounded-xl text-xs uppercase tracking-wider transition">
+            ✏️ Modifier
+          </button>
         </div>
+
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
           <button onclick="startQuestion()" class="py-3 px-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition">▶ Lancer QCM</button>
           <button onclick="lockAnswers()" class="py-3 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition">🔒 Verrouiller</button>
@@ -191,8 +197,13 @@
         </div>
       </div>
 
-      <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
-        <h3 class="text-sm font-bold uppercase tracking-wider text-emerald-400 mb-4">+ Ajouter une Question au Cloud</h3>
+      <!-- FORMULAIRE AJOUT / MODIFICATION -->
+      <div id="question-form-box" class="bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
+        <h3 id="form-title" class="text-sm font-bold uppercase tracking-wider text-emerald-400 mb-4">+ Ajouter une Question au Cloud</h3>
+        
+        <!-- Champ caché pour stocker l'ID en cas de modification -->
+        <input type="hidden" id="editing-q-id" value="">
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <input type="text" id="new-q-cat" placeholder="Catégorie (ex: Urgences)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
           <input type="text" id="new-q-round" placeholder="Round (ex: ROUND 2)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
@@ -219,9 +230,14 @@
         
         <textarea id="new-q-exp" placeholder="Explication clinique..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white mb-4 h-16"></textarea>
         
-        <button onclick="saveNewQuestion()" class="w-full py-3 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/50 text-emerald-400 font-bold rounded-xl text-sm uppercase tracking-wider transition">
-          ☁️ Enregistrer sur le Cloud Supabase
-        </button>
+        <div class="flex gap-3">
+          <button id="save-btn" onclick="saveOrUpdateQuestion()" class="flex-1 py-3 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/50 text-emerald-400 font-bold rounded-xl text-sm uppercase tracking-wider transition">
+            ☁️ Enregistrer sur le Cloud Supabase
+          </button>
+          <button id="cancel-edit-btn" onclick="cancelEditing()" class="hidden px-5 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 font-bold rounded-xl text-sm uppercase tracking-wider transition">
+            Annuler
+          </button>
+        </div>
       </div>
 
     </div>
@@ -264,11 +280,7 @@
 
       loadSettings();
       await setupConnection();
-      
-      // AUTO-MIGRATION DES QUESTIONS LOCALES VERS LE CLOUD
-      await migrateLocalToCloud();
-      
-      await loadQuestionBank(); // Charge depuis Supabase
+      await loadQuestionBank(); 
       switchView(targetView);
     };
 
@@ -304,44 +316,6 @@
     // ==========================================
     // GESTION DES QUESTIONS DANS LE CLOUD SUPABASE
     // ==========================================
-    
-    // Fonction magique pour sauver les questions de votre ami
-    async function migrateLocalToCloud() {
-      if(!db) return;
-      const saved = localStorage.getItem('fmpt_bank');
-      if (saved) {
-        const localQuestions = JSON.parse(saved);
-        // Filtrer la question de base pour ne pas la dupliquer
-        const customQuestions = localQuestions.filter(q => q.id !== 'q_default_1');
-        
-        if (customQuestions.length > 0) {
-          alert(`Sauvegarde trouvée ! Migration de ${customQuestions.length} questions locales vers le Cloud en cours...`);
-          
-          for (const q of customQuestions) {
-             const dbRow = {
-              id: q.id,
-              competition_code: 'MED26',
-              category: q.category || 'Général',
-              round: q.round || 'ROUND X',
-              timer: q.timer || 20,
-              points: q.points || 10,
-              text: q.text,
-              opt_a: q.options[0].text,
-              opt_b: q.options[1].text,
-              opt_c: q.options[2].text,
-              opt_d: q.options[3].text,
-              correct: q.correct,
-              explanation: q.explanation
-            };
-            await db.from('questions').upsert([dbRow]); // Upsert évite les doublons d'ID
-          }
-          alert("Migration réussie ! Toutes les questions sont maintenant dans le Cloud.");
-        }
-        // On supprime la base locale pour éviter que la migration se refasse en boucle
-        localStorage.removeItem('fmpt_bank');
-      }
-    }
-
     async function loadQuestionBank() {
       if(!db) return;
       
@@ -377,11 +351,59 @@
       });
     }
 
-    async function saveNewQuestion() {
+    // CHARGER UNE QUESTION DANS LE FORMULAIRE POUR MODIFICATION
+    function loadQuestionForEditing() {
+      const selectedId = document.getElementById('admin-q-select').value;
+      const q = questionBank.find(item => item.id === selectedId);
+      if(!q) return alert("Veuillez sélectionner une question valide.");
+
+      document.getElementById('editing-q-id').value = q.id;
+      document.getElementById('new-q-cat').value = q.category;
+      document.getElementById('new-q-round').value = q.round;
+      document.getElementById('new-q-points').value = q.points;
+      document.getElementById('new-q-text').value = q.text;
+      document.getElementById('new-q-optA').value = q.options[0].text;
+      document.getElementById('new-q-optB').value = q.options[1].text;
+      document.getElementById('new-q-optC').value = q.options[2].text;
+      document.getElementById('new-q-optD').value = q.options[3].text;
+      document.getElementById('new-q-correct').value = q.correct;
+      document.getElementById('new-q-timer').value = q.timer;
+      document.getElementById('new-q-exp').value = q.explanation;
+
+      // Changer l'apparence du formulaire en mode "Modification"
+      document.getElementById('form-title').innerText = "✏️ Modifier la Question";
+      document.getElementById('form-title').className = "text-sm font-bold uppercase tracking-wider text-sky-400 mb-4";
+      document.getElementById('save-btn').innerText = "🔄 Mettre à jour sur le Cloud";
+      document.getElementById('save-btn').className = "flex-1 py-3 bg-sky-500/20 hover:bg-sky-500/30 border border-sky-500/50 text-sky-400 font-bold rounded-xl text-sm uppercase tracking-wider transition";
+      document.getElementById('cancel-edit-btn').classList.remove('hidden');
+
+      // Remonter la page vers le formulaire de modification
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+
+    function cancelEditing() {
+      document.getElementById('editing-q-id').value = "";
+      document.getElementById('form-title').innerText = "+ Ajouter une Question au Cloud";
+      document.getElementById('form-title').className = "text-sm font-bold uppercase tracking-wider text-emerald-400 mb-4";
+      document.getElementById('save-btn').innerText = "☁️ Enregistrer sur le Cloud Supabase";
+      document.getElementById('save-btn').className = "flex-1 py-3 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/50 text-emerald-400 font-bold rounded-xl text-sm uppercase tracking-wider transition";
+      document.getElementById('cancel-edit-btn').classList.add('hidden');
+
+      // Vider les champs
+      document.getElementById('new-q-text').value = '';
+      document.getElementById('new-q-optA').value = ''; document.getElementById('new-q-optB').value = '';
+      document.getElementById('new-q-optC').value = ''; document.getElementById('new-q-optD').value = '';
+      document.getElementById('new-q-exp').value = '';
+    }
+
+    async function saveOrUpdateQuestion() {
       if(!db) return alert("Supabase non connecté !");
       
+      const editingId = document.getElementById('editing-q-id').value;
+      const isEditing = editingId !== "";
+
       const dbRow = {
-        id: 'q_' + Date.now(),
+        id: isEditing ? editingId : 'q_' + Date.now(),
         competition_code: 'MED26',
         category: document.getElementById('new-q-cat').value || 'Général',
         round: document.getElementById('new-q-round').value || 'ROUND X',
@@ -398,16 +420,23 @@
 
       if (!dbRow.text || !dbRow.opt_a) return alert("Veuillez remplir l'énoncé et les options.");
 
-      const { error } = await db.from('questions').insert([dbRow]);
+      // Upsert gère à la fois l'insertion (si nouvel ID) et la mise à jour (si l'ID existe déjà)
+      const { error } = await db.from('questions').upsert([dbRow]);
       if(error) return alert("Erreur cloud : " + error.message);
 
       await loadQuestionBank(); 
       emitEvent('UPDATE_QUESTIONS_CLOUD'); 
-      alert("Question ajoutée au Cloud Supabase !");
       
-      document.getElementById('new-q-text').value = '';
-      document.getElementById('new-q-optA').value = ''; document.getElementById('new-q-optB').value = '';
-      document.getElementById('new-q-optC').value = ''; document.getElementById('new-q-optD').value = '';
+      if(isEditing) {
+        alert("Question mise à jour avec succès sur le Cloud !");
+        cancelEditing();
+      } else {
+        alert("Question ajoutée au Cloud Supabase !");
+        document.getElementById('new-q-text').value = '';
+        document.getElementById('new-q-optA').value = ''; document.getElementById('new-q-optB').value = '';
+        document.getElementById('new-q-optC').value = ''; document.getElementById('new-q-optD').value = '';
+        document.getElementById('new-q-exp').value = '';
+      }
     }
 
     async function clearQuestionBank() {
