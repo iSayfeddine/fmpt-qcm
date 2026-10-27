@@ -82,7 +82,6 @@
   <main id="view-join" class="my-8 flex-1 flex justify-center items-center hidden">
     <div class="glass-panel rounded-3xl p-6 w-full max-w-md border border-slate-800 text-center">
       
-      <!-- LOGO SUR MOBILE -->
       <img src="logo.png" alt="Logo" class="h-20 mx-auto mb-4 object-contain drop-shadow-[0_0_15px_rgba(56,189,248,0.4)]">
       <div class="font-arabic text-3xl font-bold text-sky-400 mb-1">التواصل الصحي</div>
       <div class="text-xs text-slate-400 mb-6 font-semibold uppercase tracking-wider">Interface Participant</div>
@@ -178,7 +177,7 @@
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-sm font-bold uppercase tracking-wider text-sky-400">Lancement en Direct</h3>
           <button onclick="clearQuestionBank()" class="text-xs px-3 py-1.5 bg-rose-500/20 text-rose-400 font-bold rounded hover:bg-rose-500/40 border border-rose-500/30 transition">
-            🗑️ Vider la banque de questions
+            🗑️ Vider la banque (Cloud)
           </button>
         </div>
         <div class="mb-4">
@@ -193,7 +192,7 @@
       </div>
 
       <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
-        <h3 class="text-sm font-bold uppercase tracking-wider text-emerald-400 mb-4">+ Ajouter une Question</h3>
+        <h3 class="text-sm font-bold uppercase tracking-wider text-emerald-400 mb-4">+ Ajouter une Question au Cloud</h3>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <input type="text" id="new-q-cat" placeholder="Catégorie (ex: Urgences)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
           <input type="text" id="new-q-round" placeholder="Round (ex: ROUND 2)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
@@ -221,7 +220,7 @@
         <textarea id="new-q-exp" placeholder="Explication clinique..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white mb-4 h-16"></textarea>
         
         <button onclick="saveNewQuestion()" class="w-full py-3 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/50 text-emerald-400 font-bold rounded-xl text-sm uppercase tracking-wider transition">
-          💾 Enregistrer la Question
+          ☁️ Enregistrer sur le Cloud Supabase
         </button>
       </div>
 
@@ -244,7 +243,7 @@
 
     const localSync = new BroadcastChannel('fmpt_local_sync');
 
-    window.onload = function() {
+    window.onload = async function() {
       const urlParams = new URLSearchParams(window.location.search);
       let targetView = urlParams.get('view') || 'join'; 
       
@@ -264,8 +263,12 @@
       }
 
       loadSettings();
-      loadQuestionBank();
-      setupConnection();
+      await setupConnection();
+      
+      // AUTO-MIGRATION DES QUESTIONS LOCALES VERS LE CLOUD
+      await migrateLocalToCloud();
+      
+      await loadQuestionBank(); // Charge depuis Supabase
       switchView(targetView);
     };
 
@@ -298,22 +301,63 @@
       alert('Paramètres de l\'événement mis à jour !');
     }
 
-    function loadQuestionBank() {
-      const defaultQuestions = [{
-        id: "q_default_1", category: "Cardiologie", round: "ROUND 1", timer: 20, points: 10,
-        text: "Quel signe ECG est le plus spécifique d'un SCA ST+ ?",
-        options: [
-          { letter: "A", text: "Onde T négative symétrique" }, { letter: "B", text: "Sus-décalage ST avec miroir" },
-          { letter: "C", text: "Sous-décalage de ST diffus" }, { letter: "D", text: "Bloc de branche droit" }
-        ],
-        correct: "B", explanation: "Le sus-décalage avec image en miroir signe l'occlusion coronaire aiguë totale."
-      }];
-
+    // ==========================================
+    // GESTION DES QUESTIONS DANS LE CLOUD SUPABASE
+    // ==========================================
+    
+    // Fonction magique pour sauver les questions de votre ami
+    async function migrateLocalToCloud() {
+      if(!db) return;
       const saved = localStorage.getItem('fmpt_bank');
       if (saved) {
-        questionBank = JSON.parse(saved);
+        const localQuestions = JSON.parse(saved);
+        // Filtrer la question de base pour ne pas la dupliquer
+        const customQuestions = localQuestions.filter(q => q.id !== 'q_default_1');
+        
+        if (customQuestions.length > 0) {
+          alert(`Sauvegarde trouvée ! Migration de ${customQuestions.length} questions locales vers le Cloud en cours...`);
+          
+          for (const q of customQuestions) {
+             const dbRow = {
+              id: q.id,
+              competition_code: 'MED26',
+              category: q.category || 'Général',
+              round: q.round || 'ROUND X',
+              timer: q.timer || 20,
+              points: q.points || 10,
+              text: q.text,
+              opt_a: q.options[0].text,
+              opt_b: q.options[1].text,
+              opt_c: q.options[2].text,
+              opt_d: q.options[3].text,
+              correct: q.correct,
+              explanation: q.explanation
+            };
+            await db.from('questions').upsert([dbRow]); // Upsert évite les doublons d'ID
+          }
+          alert("Migration réussie ! Toutes les questions sont maintenant dans le Cloud.");
+        }
+        // On supprime la base locale pour éviter que la migration se refasse en boucle
+        localStorage.removeItem('fmpt_bank');
+      }
+    }
+
+    async function loadQuestionBank() {
+      if(!db) return;
+      
+      const { data, error } = await db.from('questions').select('*').eq('competition_code', 'MED26').order('created_at', { ascending: true });
+      
+      if(data && data.length > 0) {
+        questionBank = data.map(d => ({
+          id: d.id, category: d.category, round: d.round, timer: d.timer, points: d.points, text: d.text,
+          options: [
+            { letter: "A", text: d.opt_a }, { letter: "B", text: d.opt_b },
+            { letter: "C", text: d.opt_c }, { letter: "D", text: d.opt_d }
+          ],
+          correct: d.correct, explanation: d.explanation
+        }));
       } else {
-        questionBank = [...defaultQuestions];
+        questionBank = [];
       }
       updateQuestionSelect();
     }
@@ -322,7 +366,7 @@
       const qSelect = document.getElementById('admin-q-select');
       qSelect.innerHTML = '';
       if(questionBank.length === 0) {
-        qSelect.innerHTML = '<option disabled selected>La banque est vide</option>';
+        qSelect.innerHTML = '<option disabled selected>La banque est vide sur le cloud</option>';
         return;
       }
       questionBank.forEach(q => {
@@ -333,41 +377,45 @@
       });
     }
 
-    function saveNewQuestion() {
-      const newQ = {
+    async function saveNewQuestion() {
+      if(!db) return alert("Supabase non connecté !");
+      
+      const dbRow = {
         id: 'q_' + Date.now(),
+        competition_code: 'MED26',
         category: document.getElementById('new-q-cat').value || 'Général',
         round: document.getElementById('new-q-round').value || 'ROUND X',
         timer: parseInt(document.getElementById('new-q-timer').value) || 20,
         points: parseInt(document.getElementById('new-q-points').value) || 10,
         text: document.getElementById('new-q-text').value,
-        options: [
-          { letter: "A", text: document.getElementById('new-q-optA').value },
-          { letter: "B", text: document.getElementById('new-q-optB').value },
-          { letter: "C", text: document.getElementById('new-q-optC').value },
-          { letter: "D", text: document.getElementById('new-q-optD').value }
-        ],
+        opt_a: document.getElementById('new-q-optA').value,
+        opt_b: document.getElementById('new-q-optB').value,
+        opt_c: document.getElementById('new-q-optC').value,
+        opt_d: document.getElementById('new-q-optD').value,
         correct: document.getElementById('new-q-correct').value,
         explanation: document.getElementById('new-q-exp').value
       };
 
-      if (!newQ.text || !newQ.options[0].text) return alert("Veuillez remplir l'énoncé.");
+      if (!dbRow.text || !dbRow.opt_a) return alert("Veuillez remplir l'énoncé et les options.");
 
-      questionBank.push(newQ);
-      localStorage.setItem('fmpt_bank', JSON.stringify(questionBank));
-      updateQuestionSelect();
-      alert("Question ajoutée avec succès !");
+      const { error } = await db.from('questions').insert([dbRow]);
+      if(error) return alert("Erreur cloud : " + error.message);
+
+      await loadQuestionBank(); 
+      emitEvent('UPDATE_QUESTIONS_CLOUD'); 
+      alert("Question ajoutée au Cloud Supabase !");
       
       document.getElementById('new-q-text').value = '';
       document.getElementById('new-q-optA').value = ''; document.getElementById('new-q-optB').value = '';
       document.getElementById('new-q-optC').value = ''; document.getElementById('new-q-optD').value = '';
     }
 
-    function clearQuestionBank() {
-      if(confirm("⚠️ Voulez-vous vraiment vider la banque ? Toutes les questions seront effacées !")) {
-        questionBank = [];
-        localStorage.setItem('fmpt_bank', JSON.stringify(questionBank));
-        updateQuestionSelect();
+    async function clearQuestionBank() {
+      if(!confirm("⚠️ Voulez-vous vraiment vider la banque sur le CLOUD ? Cela effacera les questions pour TOUS les ordinateurs !")) return;
+      if(db) {
+        await db.from('questions').delete().eq('competition_code', 'MED26');
+        await loadQuestionBank();
+        emitEvent('UPDATE_QUESTIONS_CLOUD');
       }
     }
 
@@ -387,7 +435,7 @@
             if(status === 'SUBSCRIBED') {
               const badge = document.getElementById('db-status');
               badge.className = "px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
-              badge.innerText = "🟢 Supabase Connecté";
+              badge.innerText = "🟢 Supabase Connecté (Multi-Admins)";
             }
           });
       } catch(e) { console.error(e); }
@@ -418,11 +466,12 @@
         document.getElementById('live-location-text').innerText = payload.data.location;
         document.getElementById('live-title-text').innerText = payload.data.title;
       }
+      if(payload.action === 'UPDATE_QUESTIONS_CLOUD') loadQuestionBank(); 
       if(payload.action === 'HARD_RESET') window.location.reload(); 
     }
 
     function startQuestion() {
-      if(questionBank.length === 0) return alert("Banque vide !");
+      if(questionBank.length === 0) return alert("Banque vide ! Ajoutez une question.");
       const q = questionBank.find(item => item.id === document.getElementById('admin-q-select').value);
       if(q) emitEvent('QUESTION_START', q);
     }
@@ -436,7 +485,7 @@
     function showLeaderboard() { emitEvent('SHOW_LEADERBOARD'); }
 
     async function hardResetDatabase() {
-      if(!confirm("ATTENTION : Cela va supprimer TOUS les participants et leurs scores de la base de données. Continuer ?")) return;
+      if(!confirm("ATTENTION : Cela va supprimer TOUS les participants et leurs scores de la base. Continuer ?")) return;
       if(db) {
         await db.from('participants').delete().eq('competition_code', 'MED26');
         emitEvent('HARD_RESET');
