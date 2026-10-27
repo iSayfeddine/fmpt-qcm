@@ -12,7 +12,7 @@
     body { background-color: #060B19; color: #F1F5F9; font-family: 'Inter', sans-serif; }
     .font-arabic { font-family: 'Cairo', sans-serif; }
     .glass-panel { background: rgba(11, 21, 44, 0.85); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); }
-    .gold-glow { box-shadow: 0 0 35px rgba(245, 158, 11, 0.2); }
+    .gold-glow { box-shadow: 0 0 50px rgba(245, 158, 11, 0.4); }
     .blue-glow { box-shadow: 0 0 35px rgba(56, 189, 248, 0.2); }
   </style>
 </head>
@@ -33,6 +33,7 @@
   <!-- VIEW 1: LIVE PROJECTOR SCREEN (?view=live) -->
   <main id="view-live" class="my-8 flex-1 flex flex-col justify-center items-center hidden">
     
+    <!-- LOBBY -->
     <div id="live-lobby" class="glass-panel blue-glow rounded-3xl p-8 md:p-12 w-full max-w-4xl text-center border border-sky-500/30">
       <div id="live-location-text" class="text-xs font-bold uppercase tracking-widest text-sky-400 mb-2">Grand Amphithéâtre FMPT</div>
       <h1 id="live-title-text" class="text-3xl md:text-5xl font-black text-white mb-6">MEDICAL CHALLENGE 2026</h1>
@@ -52,6 +53,7 @@
       </div>
     </div>
 
+    <!-- ÉCRAN QUESTION -->
     <div id="live-question-screen" class="hidden glass-panel rounded-3xl p-8 md:p-12 w-full max-w-5xl border border-slate-700">
       <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-800">
         <div>
@@ -72,13 +74,29 @@
       </div>
     </div>
 
+    <!-- ÉCRAN CLASSEMENT -->
     <div id="live-leaderboard-screen" class="hidden glass-panel blue-glow rounded-3xl p-8 md:p-12 w-full max-w-4xl text-center border border-sky-500/30">
       <h2 class="text-4xl font-black text-sky-400 mb-8 uppercase tracking-widest">🏆 Classement en Direct</h2>
       <div id="leaderboard-list" class="flex flex-col gap-3"></div>
     </div>
+
+    <!-- ÉCRAN DU VAINQUEUR (NOUVEAU) -->
+    <div id="live-winner-screen" class="hidden glass-panel gold-glow rounded-3xl p-12 w-full max-w-4xl text-center border-4 border-amber-400">
+      <div class="text-6xl mb-4">👑</div>
+      <div class="font-arabic text-4xl md:text-5xl font-black text-amber-400 mb-2">الفائز بالمرتبة الأولى</div>
+      <div class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-8">LE GRAND VAINQUEUR DU CHALLENGE</div>
+      
+      <div id="winner-name-display" class="text-4xl md:text-6xl font-black text-white bg-slate-900/90 py-6 px-8 rounded-2xl border-2 border-amber-400/50 mb-6 shadow-2xl">
+        Chargement...
+      </div>
+      
+      <div class="text-2xl font-bold text-emerald-400">
+        Score Final : <span id="winner-score-display" class="text-3xl font-black">0</span> Points
+      </div>
+    </div>
   </main>
 
-  <!-- VIEW 2: PARTICIPANT MOBILE (/ ou ?view=join) -->
+  <!-- VIEW 2: PARTICIPANT MOBILE (?view=join) -->
   <main id="view-join" class="my-8 flex-1 flex justify-center items-center hidden">
     <div class="glass-panel rounded-3xl p-6 w-full max-w-md border border-slate-800 text-center">
       
@@ -157,19 +175,23 @@
             <div class="text-2xl font-black text-sky-400 font-mono">MED26</div>
           </div>
         </div>
-        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex justify-between items-center">
-          <div>
-            <div class="text-xs text-slate-400 mb-1">Participants Inscrits</div>
-            <div id="admin-count-display" class="text-2xl font-black text-emerald-400">0</div>
+        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex flex-col gap-3">
+          <div class="flex justify-between items-center">
+            <span class="text-xs text-slate-400">Participants Inscrits</span>
+            <span id="admin-count-display" class="text-xl font-black text-emerald-400">0</span>
           </div>
-          <div class="flex flex-col gap-2">
-            <button onclick="showLeaderboard()" class="px-4 py-2 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded-lg text-xs uppercase tracking-wider transition">
-              🏆 Afficher Classement
+          <!-- BOUTONS DE CLASSEMENT ET VAINQUEUR -->
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="showLeaderboard()" class="px-3 py-2 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded-lg text-xs uppercase tracking-wider transition">
+              🏆 Classement
             </button>
-            <button onclick="hardResetDatabase()" class="px-4 py-2 bg-rose-500 hover:bg-rose-400 text-slate-950 font-bold rounded-lg text-xs uppercase tracking-wider transition">
-              🗑️ Vider Joueurs
+            <button onclick="revealWinner()" class="px-3 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black rounded-lg text-xs uppercase tracking-wider transition">
+              👑 Annoncer Vainqueur
             </button>
           </div>
+          <button onclick="hardResetDatabase()" class="w-full py-1.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 font-bold rounded-lg text-xs uppercase tracking-wider border border-rose-500/30 transition">
+            🗑️ Vider Joueurs
+          </button>
         </div>
       </div>
 
@@ -181,7 +203,6 @@
           </button>
         </div>
         
-        <!-- SÉLECTION ET BOUTON DE MODIFICATION -->
         <div class="flex gap-3 mb-4">
           <select id="admin-q-select" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white font-medium focus:outline-none focus:border-sky-400"></select>
           <button onclick="loadQuestionForEditing()" class="px-5 py-3 bg-sky-500/20 hover:bg-sky-500/30 border border-sky-500/50 text-sky-400 font-bold rounded-xl text-xs uppercase tracking-wider transition">
@@ -201,7 +222,6 @@
       <div id="question-form-box" class="bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
         <h3 id="form-title" class="text-sm font-bold uppercase tracking-wider text-emerald-400 mb-4">+ Ajouter une Question au Cloud</h3>
         
-        <!-- Champ caché pour stocker l'ID en cas de modification -->
         <input type="hidden" id="editing-q-id" value="">
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -313,9 +333,6 @@
       alert('Paramètres de l\'événement mis à jour !');
     }
 
-    // ==========================================
-    // GESTION DES QUESTIONS DANS LE CLOUD SUPABASE
-    // ==========================================
     async function loadQuestionBank() {
       if(!db) return;
       
@@ -351,7 +368,6 @@
       });
     }
 
-    // CHARGER UNE QUESTION DANS LE FORMULAIRE POUR MODIFICATION
     function loadQuestionForEditing() {
       const selectedId = document.getElementById('admin-q-select').value;
       const q = questionBank.find(item => item.id === selectedId);
@@ -370,14 +386,12 @@
       document.getElementById('new-q-timer').value = q.timer;
       document.getElementById('new-q-exp').value = q.explanation;
 
-      // Changer l'apparence du formulaire en mode "Modification"
       document.getElementById('form-title').innerText = "✏️ Modifier la Question";
       document.getElementById('form-title').className = "text-sm font-bold uppercase tracking-wider text-sky-400 mb-4";
       document.getElementById('save-btn').innerText = "🔄 Mettre à jour sur le Cloud";
       document.getElementById('save-btn').className = "flex-1 py-3 bg-sky-500/20 hover:bg-sky-500/30 border border-sky-500/50 text-sky-400 font-bold rounded-xl text-sm uppercase tracking-wider transition";
       document.getElementById('cancel-edit-btn').classList.remove('hidden');
 
-      // Remonter la page vers le formulaire de modification
       window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     }
 
@@ -389,7 +403,6 @@
       document.getElementById('save-btn').className = "flex-1 py-3 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/50 text-emerald-400 font-bold rounded-xl text-sm uppercase tracking-wider transition";
       document.getElementById('cancel-edit-btn').classList.add('hidden');
 
-      // Vider les champs
       document.getElementById('new-q-text').value = '';
       document.getElementById('new-q-optA').value = ''; document.getElementById('new-q-optB').value = '';
       document.getElementById('new-q-optC').value = ''; document.getElementById('new-q-optD').value = '';
@@ -420,7 +433,6 @@
 
       if (!dbRow.text || !dbRow.opt_a) return alert("Veuillez remplir l'énoncé et les options.");
 
-      // Upsert gère à la fois l'insertion (si nouvel ID) et la mise à jour (si l'ID existe déjà)
       const { error } = await db.from('questions').upsert([dbRow]);
       if(error) return alert("Erreur cloud : " + error.message);
 
@@ -491,6 +503,7 @@
       if(payload.action === 'REVEAL_ANSWER') executeReveal(payload.data);
       if(payload.action === 'RESET_LOBBY') executeReset();
       if(payload.action === 'SHOW_LEADERBOARD') executeLeaderboard();
+      if(payload.action === 'SHOW_WINNER') renderWinnerScreen(payload.data); // Événement Vainqueur
       if(payload.action === 'UPDATE_SETTINGS') {
         document.getElementById('live-location-text').innerText = payload.data.location;
         document.getElementById('live-title-text').innerText = payload.data.title;
@@ -512,6 +525,34 @@
     }
     function resetLobby() { emitEvent('RESET_LOBBY'); }
     function showLeaderboard() { emitEvent('SHOW_LEADERBOARD'); }
+
+    // FONCTION POUR RÉCUPÉRER LE PREMIER ET LANCER LA CÉLÉBRATION
+    async function revealWinner() {
+      if(!db) return alert("Erreur Supabase");
+      
+      const { data, error } = await db.from('participants')
+        .select('nom, score')
+        .eq('competition_code', 'MED26')
+        .order('score', { ascending: false })
+        .limit(1);
+
+      if(error || !data || data.length === 0) {
+        return alert("Aucun participant trouvé dans le classement !");
+      }
+
+      const winner = data[0]; // Le premier du classement
+      emitEvent('SHOW_WINNER', winner);
+    }
+
+    function renderWinnerScreen(winner) {
+      document.getElementById('live-lobby').classList.add('hidden');
+      document.getElementById('live-question-screen').classList.add('hidden');
+      document.getElementById('live-leaderboard-screen').classList.add('hidden');
+      document.getElementById('live-winner-screen').classList.remove('hidden');
+
+      document.getElementById('winner-name-display').innerText = winner.nom;
+      document.getElementById('winner-score-display').innerText = winner.score;
+    }
 
     async function hardResetDatabase() {
       if(!confirm("ATTENTION : Cela va supprimer TOUS les participants et leurs scores de la base. Continuer ?")) return;
@@ -552,6 +593,7 @@
 
       document.getElementById('live-lobby').classList.add('hidden');
       document.getElementById('live-leaderboard-screen').classList.add('hidden');
+      document.getElementById('live-winner-screen').classList.add('hidden');
       document.getElementById('live-question-screen').classList.remove('hidden');
       document.getElementById('live-explanation-box').classList.add('hidden');
 
@@ -646,34 +688,40 @@
       }
     }
 
-    async function executeLeaderboard() {
+    async function showLeaderboard() {
+      emitEvent('SHOW_LEADERBOARD');
+    }
+
+    function executeLeaderboard() {
       document.getElementById('live-lobby').classList.add('hidden');
       document.getElementById('live-question-screen').classList.add('hidden');
+      document.getElementById('live-winner-screen').classList.add('hidden');
       document.getElementById('live-leaderboard-screen').classList.remove('hidden');
 
       if(db) {
-        const { data, error } = await db.from('participants')
+        db.from('participants')
           .select('nom, score')
           .eq('competition_code', 'MED26')
           .order('score', { ascending: false })
-          .limit(10);
-          
-        if(data) {
-          const list = document.getElementById('leaderboard-list');
-          list.innerHTML = '';
-          data.forEach((p, index) => {
-            const isTop = index === 0 ? "bg-sky-500 text-slate-950 font-black blue-glow scale-105" : "bg-slate-900 text-white font-bold border border-slate-700";
-            list.innerHTML += `
-              <div class="flex justify-between items-center p-5 rounded-2xl ${isTop} transition">
-                <div class="flex items-center gap-4">
-                  <span class="text-xl">#${index + 1}</span>
-                  <span class="text-xl tracking-wide">${p.nom}</span>
-                </div>
-                <div class="text-2xl">${p.score} pts</div>
-              </div>
-            `;
+          .limit(10)
+          .then(({ data }) => {
+            if(data) {
+              const list = document.getElementById('leaderboard-list');
+              list.innerHTML = '';
+              data.forEach((p, index) => {
+                const isTop = index === 0 ? "bg-sky-500 text-slate-950 font-black blue-glow scale-105" : "bg-slate-900 text-white font-bold border border-slate-700";
+                list.innerHTML += `
+                  <div class="flex justify-between items-center p-5 rounded-2xl ${isTop} transition">
+                    <div class="flex items-center gap-4">
+                      <span class="text-xl">#${index + 1}</span>
+                      <span class="text-xl tracking-wide">${p.nom}</span>
+                    </div>
+                    <div class="text-2xl">${p.score} pts</div>
+                  </div>
+                `;
+              });
+            }
           });
-        }
       }
     }
 
@@ -681,6 +729,7 @@
       clearInterval(timerInterval);
       document.getElementById('live-question-screen').classList.add('hidden');
       document.getElementById('live-leaderboard-screen').classList.add('hidden');
+      document.getElementById('live-winner-screen').classList.add('hidden');
       document.getElementById('live-lobby').classList.remove('hidden');
       
       document.getElementById('mobile-question-screen').classList.add('hidden');
