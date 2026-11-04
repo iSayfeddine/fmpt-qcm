@@ -604,7 +604,7 @@
       const grid = document.getElementById('live-options-grid');
       grid.innerHTML = '';
       q.options.forEach(opt => {
-        grid.innerHTML += `<div id="opt-box-${opt.letter}" class="p-5 bg-slate-900 border border-slate-800 rounded-2xl flex items-center gap-4 transition"><span class="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center font-bold border border-sky-500/30 shrink-0">${opt.letter}</span><span dir="rtl" class="text-white font-semibold text-lg flex-1 text-right">${opt.text}</span></div>`;
+        grid.innerHTML += `<div id="opt-box-${opt.letter}" dir="rtl" class="p-5 bg-slate-900 border border-slate-800 rounded-2xl flex items-center gap-4 transition text-right"><span class="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center font-bold border border-sky-500/30 shrink-0">${opt.letter}</span><span dir="rtl" class="text-white font-semibold text-lg flex-1 text-right">${opt.text}</span></div>`;
       });
 
       document.getElementById('mobile-waiting').classList.add('hidden');
@@ -616,7 +616,7 @@
       const mContainer = document.getElementById('mobile-options-container');
       mContainer.innerHTML = '';
       q.options.forEach(opt => {
-        mContainer.innerHTML += `<button id="m-btn-${opt.letter}" onclick="submitAnswer('${opt.letter}')" class="w-full p-4 bg-slate-900 border border-slate-700 hover:border-sky-400 rounded-2xl text-right text-white font-bold flex items-center gap-3 transition"><span class="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center text-sm shrink-0">${opt.letter}</span><span dir="rtl" class="flex-1">${opt.text}</span></button>`;
+        mContainer.innerHTML += `<button id="m-btn-${opt.letter}" onclick="submitAnswer('${opt.letter}')" dir="rtl" class="w-full p-4 bg-slate-900 border border-slate-700 hover:border-sky-400 rounded-2xl text-right text-white font-bold flex items-center gap-3 transition"><span class="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center text-sm shrink-0">${opt.letter}</span><span dir="rtl" class="flex-1 text-right">${opt.text}</span></button>`;
       });
       startTimer(q.timer);
     }
